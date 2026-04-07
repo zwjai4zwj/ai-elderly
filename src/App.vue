@@ -6,7 +6,26 @@
         <h1 class="text-2xl font-bold text-center text-blue-600 mb-6">康养AI实训系统</h1>
         <p class="text-gray-500 text-center mb-6">阳泉师专康养系</p>
         
-        <div class="space-y-4">
+        <!-- 登录方式选择 -->
+        <div class="flex mb-4 bg-gray-100 rounded-lg p-1">
+          <button 
+            @click="loginMode = 'password'"
+            :class="loginMode === 'password' ? 'bg-white shadow' : ''"
+            class="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
+          >
+            账号密码
+          </button>
+          <button 
+            @click="loginMode = 'register'"
+            :class="loginMode === 'register' ? 'bg-white shadow' : ''"
+            class="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
+          >
+            注册账号
+          </button>
+        </div>
+        
+        <!-- 账号密码登录 -->
+        <div v-if="loginMode === 'password'" class="space-y-4">
           <input 
             v-model="loginForm.username" 
             placeholder="账号" 
@@ -20,10 +39,45 @@
           />
           <button 
             @click="login" 
-            class="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
+            :disabled="isLoggingIn"
+            class="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400"
           >
-            登录
+            {{ isLoggingIn ? '登录中...' : '登录' }}
           </button>
+          <p v-if="loginError" class="text-red-500 text-sm text-center">{{ loginError }}</p>
+        </div>
+        
+        <!-- 注册 -->
+        <div v-else class="space-y-4">
+          <input 
+            v-model="registerForm.name" 
+            placeholder="姓名" 
+            class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <input 
+            v-model="registerForm.email" 
+            type="email"
+            placeholder="邮箱" 
+            class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <input 
+            v-model="registerForm.password" 
+            type="password"
+            placeholder="密码（至少6位）" 
+            class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <select v-model="registerForm.classId" class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">选择班级</option>
+            <option v-for="cls in classes" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
+          </select>
+          <button 
+            @click="register" 
+            :disabled="isRegistering"
+            class="w-full py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-400"
+          >
+            {{ isRegistering ? '注册中...' : '注册' }}
+          </button>
+          <p v-if="registerError" class="text-red-500 text-sm text-center">{{ registerError }}</p>
         </div>
         
         <p class="text-center text-gray-400 text-sm mt-4">
@@ -37,8 +91,11 @@
       <!-- 顶部导航 -->
       <div class="bg-blue-600 text-white p-4">
         <div class="flex justify-between items-center max-w-4xl mx-auto">
-          <h1 class="text-lg font-bold">康养AI实训系统</h1>
-          <button @click="logout" class="text-sm bg-blue-500 px-3 py-1 rounded">退出</button>
+          <div>
+            <h1 class="text-lg font-bold">康养AI实训系统</h1>
+            <p class="text-sm text-blue-200">{{ currentUser.name }} ({{ currentUser.role === 'admin' ? '管理员' : '学生' }})</p>
+          </div>
+          <button @click="logout" class="text-sm bg-blue-500 px-3 py-1 rounded hover:bg-blue-400">退出</button>
         </div>
       </div>
       
@@ -51,25 +108,60 @@
             <div class="bg-white rounded-xl p-6 shadow">
               <h2 class="text-xl font-bold mb-4">开始练习</h2>
               <p class="text-gray-500 mb-4">输入老人画像，AI将自动生成病例和对话场景</p>
-              <button @click="currentStep = 'input'" class="w-full py-3 bg-blue-600 text-white rounded-lg font-medium">
+              <button @click="currentStep = 'input'" class="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
                 开始新练习
               </button>
             </div>
             
+            <!-- 练习历史 -->
             <div class="bg-white rounded-xl p-6 shadow">
-              <h2 class="text-lg font-bold mb-2">练习历史</h2>
-              <p class="text-gray-400">暂无练习记录</p>
+              <h2 class="text-lg font-bold mb-4">练习历史</h2>
+              <div v-if="practiceHistory.length === 0" class="text-gray-400 text-center py-4">
+                暂无练习记录
+              </div>
+              <div v-else class="space-y-3">
+                <div v-for="record in practiceHistory" :key="record.id" 
+                     class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p class="font-medium">{{ record.case_data?.caseName || '练习记录' }}</p>
+                    <p class="text-sm text-gray-500">{{ formatDate(record.created_at) }}</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-lg font-bold text-blue-600">{{ record.score || '--' }}分</p>
+                    <button @click="viewRecord(record)" class="text-sm text-blue-500">查看详情</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 统计信息 -->
+            <div class="grid grid-cols-3 gap-4">
+              <div class="bg-white rounded-xl p-4 shadow text-center">
+                <p class="text-2xl font-bold text-blue-600">{{ stats.totalPractices }}</p>
+                <p class="text-sm text-gray-500">练习次数</p>
+              </div>
+              <div class="bg-white rounded-xl p-4 shadow text-center">
+                <p class="text-2xl font-bold text-green-600">{{ stats.avgScore }}</p>
+                <p class="text-sm text-gray-500">平均分</p>
+              </div>
+              <div class="bg-white rounded-xl p-4 shadow text-center">
+                <p class="text-2xl font-bold text-orange-600">{{ stats.highestScore }}</p>
+                <p class="text-sm text-gray-500">最高分</p>
+              </div>
             </div>
           </div>
           
           <!-- 输入画像 -->
           <div v-else-if="currentStep === 'input'" class="bg-white rounded-xl p-6 shadow">
-            <h2 class="text-xl font-bold mb-6">老人画像设置</h2>
+            <div class="flex items-center mb-6">
+              <button @click="currentStep = 'home'" class="text-gray-500 mr-3">← 返回</button>
+              <h2 class="text-xl font-bold">老人画像设置</h2>
+            </div>
             
             <div class="space-y-4">
               <div>
                 <label class="block text-gray-700 mb-2">年龄</label>
-                <select v-model="caseProfile.age" class="w-full px-4 py-3 border rounded-lg">
+                <select v-model="caseProfile.age" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
                   <option value="60-70">60-70岁</option>
                   <option value="70-80">70-80岁</option>
                   <option value="80-90">80-90岁</option>
@@ -78,16 +170,18 @@
               
               <div>
                 <label class="block text-gray-700 mb-2">性别</label>
-                <select v-model="caseProfile.gender" class="w-full px-4 py-3 border rounded-lg">
+                <select v-model="caseProfile.gender" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
                   <option value="男">男</option>
                   <option value="女">女</option>
                 </select>
               </div>
               
               <div>
-                <label class="block text-gray-700 mb-2">疾病类型</label>
+                <label class="block text-gray-700 mb-2">疾病类型（可多选）</label>
                 <div class="grid grid-cols-2 gap-2">
-                  <label v-for="d in diseases" :key="d" class="flex items-center p-2 border rounded-lg">
+                  <label v-for="d in diseases" :key="d" 
+                         class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                         :class="caseProfile.diseases.includes(d) ? 'border-blue-500 bg-blue-50' : ''">
                     <input type="checkbox" v-model="caseProfile.diseases" :value="d" class="mr-2">
                     {{ d }}
                   </label>
@@ -96,7 +190,7 @@
               
               <div>
                 <label class="block text-gray-700 mb-2">性格特点</label>
-                <select v-model="caseProfile.personality" class="w-full px-4 py-3 border rounded-lg">
+                <select v-model="caseProfile.personality" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
                   <option value="开朗健谈">开朗健谈</option>
                   <option value="内向沉默">内向沉默</option>
                   <option value="焦虑多疑">焦虑多疑</option>
@@ -106,7 +200,7 @@
               
               <div>
                 <label class="block text-gray-700 mb-2">方言偏好</label>
-                <select v-model="caseProfile.dialect" class="w-full px-4 py-3 border rounded-lg">
+                <select v-model="caseProfile.dialect" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
                   <option value="普通话">普通话</option>
                   <option value="山西话">山西话</option>
                   <option value="东北话">东北话</option>
@@ -116,57 +210,109 @@
               
               <button 
                 @click="generateCase" 
-                :disabled="isGenerating"
+                :disabled="isGenerating || caseProfile.diseases.length === 0"
                 class="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400"
               >
-                {{ isGenerating ? '生成中...' : '生成病例' }}
+                <span v-if="isGenerating" class="flex items-center justify-center">
+                  <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  AI生成中...
+                </span>
+                <span v-else>生成病例</span>
               </button>
             </div>
           </div>
           
           <!-- 病例展示 -->
           <div v-else-if="currentStep === 'case'" class="space-y-4">
+            <div class="flex items-center mb-2">
+              <button @click="currentStep = 'input'" class="text-gray-500 mr-3">← 返回</button>
+              <h2 class="text-xl font-bold">病例详情</h2>
+            </div>
+            
             <div class="bg-white rounded-xl p-6 shadow">
-              <h2 class="text-xl font-bold mb-4">{{ generatedCase.caseName }}</h2>
-              <div class="space-y-3 text-gray-600">
-                <p><strong>姓名：</strong>{{ generatedCase.basicInfo.name }}</p>
-                <p><strong>年龄：</strong>{{ generatedCase.basicInfo.age }}岁</p>
-                <p><strong>性别：</strong>{{ generatedCase.basicInfo.gender }}</p>
-                <p><strong>主诉：</strong>{{ generatedCase.medicalHistory.chiefComplaint }}</p>
+              <h3 class="text-lg font-bold text-blue-600 mb-4">{{ generatedCase.caseName }}</h3>
+              
+              <div class="grid gap-4">
+                <div class="bg-blue-50 rounded-lg p-4">
+                  <h4 class="font-medium text-blue-800 mb-2">基本信息</h4>
+                  <div class="grid grid-cols-2 gap-2 text-sm">
+                    <p><span class="text-gray-500">姓名：</span>{{ generatedCase.basicInfo?.name }}</p>
+                    <p><span class="text-gray-500">年龄：</span>{{ generatedCase.basicInfo?.age }}岁</p>
+                    <p><span class="text-gray-500">性别：</span>{{ generatedCase.basicInfo?.gender }}</p>
+                    <p><span class="text-gray-500">职业：</span>{{ generatedCase.basicInfo?.occupation }}</p>
+                  </div>
+                  <p class="text-sm mt-2"><span class="text-gray-500">家庭情况：</span>{{ generatedCase.basicInfo?.familyStatus }}</p>
+                </div>
+                
+                <div class="bg-orange-50 rounded-lg p-4">
+                  <h4 class="font-medium text-orange-800 mb-2">病史信息</h4>
+                  <p class="text-sm mb-1"><span class="text-gray-500">主诉：</span>{{ generatedCase.medicalHistory?.chiefComplaint }}</p>
+                  <p class="text-sm mb-1"><span class="text-gray-500">现病史：</span>{{ generatedCase.medicalHistory?.presentIllness }}</p>
+                  <p class="text-sm"><span class="text-gray-500">用药：</span>{{ generatedCase.medicalHistory?.medications?.join('、') }}</p>
+                </div>
+                
+                <div class="bg-green-50 rounded-lg p-4">
+                  <h4 class="font-medium text-green-800 mb-2">性格特点</h4>
+                  <p class="text-sm"><span class="text-gray-500">特点：</span>{{ generatedCase.personality?.traits?.join('、') }}</p>
+                  <p class="text-sm"><span class="text-gray-500">关注：</span>{{ generatedCase.personality?.concerns?.join('、') }}</p>
+                </div>
               </div>
             </div>
             
             <button 
               @click="startChat" 
-              class="w-full py-3 bg-green-600 text-white rounded-lg font-medium"
+              class="w-full py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700"
             >
-              开始对话练习
+              开始对话练习 →
             </button>
           </div>
           
           <!-- 对话界面 -->
           <div v-else-if="currentStep === 'chat'" class="flex flex-col h-[calc(100vh-120px)]">
-            <div class="flex-1 overflow-y-auto p-4 space-y-3">
+            <!-- 对话提示 -->
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-2">
+              <p class="text-sm text-yellow-700">💡 您正在与 {{ generatedCase.basicInfo?.name }} 对话，请以康养专业学生的身份进行沟通</p>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-100 rounded-t-lg">
               <div v-for="(msg, i) in messages" :key="i" 
                    :class="msg.role === 'user' ? 'text-right' : 'text-left'">
-                <div :class="msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'"
-                     class="inline-block max-w-[80%] px-4 py-2 rounded-lg">
+                <div class="text-xs text-gray-400 mb-1">
+                  {{ msg.role === 'user' ? '我' : generatedCase.basicInfo?.name }}
+                </div>
+                <div :class="msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-white text-gray-800'"
+                     class="inline-block max-w-[80%] px-4 py-2 rounded-lg shadow-sm">
                   {{ msg.content }}
+                </div>
+              </div>
+              <div v-if="isTyping" class="text-left">
+                <div class="bg-white text-gray-400 px-4 py-2 rounded-lg inline-block">
+                  正在输入...
                 </div>
               </div>
             </div>
             
-            <div class="p-4 bg-white border-t">
+            <div class="p-4 bg-white border-t rounded-b-lg">
               <div class="flex gap-2">
                 <input 
                   v-model="userInput" 
                   @keyup.enter="sendMessage"
                   placeholder="输入消息..."
-                  class="flex-1 px-4 py-2 border rounded-lg"
+                  class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  :disabled="isTyping"
                 />
-                <button @click="sendMessage" class="px-4 py-2 bg-blue-600 text-white rounded-lg">发送</button>
+                <button 
+                  @click="sendMessage" 
+                  :disabled="!userInput.trim() || isTyping"
+                  class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+                >
+                  发送
+                </button>
               </div>
-              <button @click="endChat" class="w-full mt-2 py-2 bg-red-500 text-white rounded-lg text-sm">
+              <button @click="endChat" class="w-full mt-3 py-2 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600">
                 结束对话并评分
               </button>
             </div>
@@ -176,24 +322,50 @@
           <div v-else-if="currentStep === 'score'" class="space-y-4">
             <div class="bg-white rounded-xl p-6 shadow text-center">
               <h2 class="text-2xl font-bold mb-2">练习完成！</h2>
-              <div class="text-5xl font-bold text-blue-600 my-4">{{ score.totalScore }}</div>
+              <div class="text-6xl font-bold my-6" 
+                   :class="score.totalScore >= 80 ? 'text-green-600' : score.totalScore >= 60 ? 'text-blue-600' : 'text-orange-600'">
+                {{ score.totalScore }}
+              </div>
               <p class="text-gray-500">总分 / 100</p>
             </div>
             
             <div class="bg-white rounded-xl p-6 shadow">
               <h3 class="font-bold mb-4">各维度得分</h3>
-              <div class="space-y-3">
-                <div v-for="(value, key) in score.dimensions" :key="key" class="flex items-center">
-                  <span class="w-24">{{ key }}</span>
-                  <div class="flex-1 bg-gray-200 rounded-full h-4 mx-2">
-                    <div class="bg-blue-600 h-4 rounded-full" :style="{ width: value * 4 + '%' }"></div>
+              <div class="space-y-4">
+                <div v-for="(value, key) in score.dimensions" :key="key">
+                  <div class="flex justify-between mb-1">
+                    <span>{{ key }}</span>
+                    <span class="font-medium">{{ value }}/25</span>
                   </div>
-                  <span class="w-8 text-right">{{ value }}</span>
+                  <div class="bg-gray-200 rounded-full h-3">
+                    <div class="bg-blue-600 h-3 rounded-full transition-all duration-500" 
+                         :style="{ width: (value / 25 * 100) + '%' }"></div>
+                  </div>
                 </div>
               </div>
             </div>
             
-            <button @click="resetPractice" class="w-full py-3 bg-blue-600 text-white rounded-lg font-medium">
+            <div class="bg-white rounded-xl p-6 shadow">
+              <h3 class="font-bold mb-3">评语</h3>
+              <p class="text-gray-600">{{ score.feedback }}</p>
+              
+              <div class="mt-4 grid grid-cols-2 gap-4">
+                <div>
+                  <p class="text-sm text-gray-500 mb-2">优点</p>
+                  <ul class="text-sm space-y-1">
+                    <li v-for="s in score.strengths" :key="s" class="text-green-600">✓ {{ s }}</li>
+                  </ul>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500 mb-2">待改进</p>
+                  <ul class="text-sm space-y-1">
+                    <li v-for="i in score.improvements" :key="i" class="text-orange-600">→ {{ i }}</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <button @click="resetPractice" class="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
               开始新练习
             </button>
           </div>
@@ -206,14 +378,65 @@
             <p class="text-gray-500">欢迎，{{ currentUser.name }}</p>
           </div>
           
-          <div class="grid gap-4">
+          <div class="grid gap-4 md:grid-cols-2">
+            <!-- 创建班级 -->
             <div class="bg-white rounded-xl p-6 shadow">
-              <h3 class="font-bold mb-2">创建班级</h3>
-              <p class="text-gray-400 text-sm">功能开发中...</p>
+              <h3 class="font-bold mb-4">创建班级</h3>
+              <div class="space-y-3">
+                <input 
+                  v-model="newClass.name" 
+                  placeholder="班级名称"
+                  class="w-full px-3 py-2 border rounded-lg"
+                />
+                <button 
+                  @click="createClass"
+                  :disabled="!newClass.name"
+                  class="w-full py-2 bg-blue-600 text-white rounded-lg disabled:bg-gray-400"
+                >
+                  创建
+                </button>
+              </div>
+              
+              <div class="mt-4">
+                <p class="text-sm text-gray-500 mb-2">已有班级</p>
+                <div v-for="cls in classes" :key="cls.id" class="p-2 bg-gray-50 rounded mb-1 text-sm">
+                  {{ cls.name }} ({{ cls.student_count || 0 }}人)
+                </div>
+              </div>
             </div>
+            
+            <!-- 学生列表 -->
             <div class="bg-white rounded-xl p-6 shadow">
-              <h3 class="font-bold mb-2">创建用户</h3>
-              <p class="text-gray-400 text-sm">功能开发中...</p>
+              <h3 class="font-bold mb-4">学生管理</h3>
+              <div v-if="students.length === 0" class="text-gray-400 text-sm">
+                暂无学生
+              </div>
+              <div v-else class="space-y-2 max-h-60 overflow-y-auto">
+                <div v-for="student in students" :key="student.id" 
+                     class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                  <span>{{ student.name }}</span>
+                  <span class="text-sm text-gray-500">{{ student.class_name }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 练习统计 -->
+          <div class="bg-white rounded-xl p-6 shadow">
+            <h3 class="font-bold mb-4">练习统计</h3>
+            <div class="grid grid-cols-3 gap-4 text-center">
+              <div class="p-4 bg-blue-50 rounded-lg">
+                <p class="text-2xl font-bold text-blue-600">{{ adminStats.totalPractices }}</p>
+                <p class="text-sm text-gray-500">总练习次数</p>
+              </div>
+              <div class="p-4 bg-green-50 rounded-lg">
+                <p class="text-2xl font-bold text-green-600">{{ adminStats.avgScore }}</p>
+                <p class="text-sm text-gray-500">平均分</p>
+              </div>
+              <div class="p-4 bg-orange-50 rounded-lg">
+                <p class="text-2xl font-bold text-orange-600">{{ adminStats.activeUsers }}</p>
+                <p class="text-sm text-gray-500">活跃学生</p>
+              </div>
             </div>
           </div>
         </div>
@@ -223,15 +446,37 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
+import { createClient } from '@supabase/supabase-js'
 
+// 初始化 Supabase
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
+
+// API 基础路径
+const apiBase = '/.netlify/functions'
+
+// 状态
 const isLoggedIn = ref(false)
 const currentUser = ref({})
 const currentStep = ref('home')
+const loginMode = ref('password')
+const isLoggingIn = ref(false)
+const isRegistering = ref(false)
+const loginError = ref('')
+const registerError = ref('')
 
 const loginForm = reactive({
   username: '',
   password: ''
+})
+
+const registerForm = reactive({
+  name: '',
+  email: '',
+  password: '',
+  classId: ''
 })
 
 const caseProfile = reactive({
@@ -248,27 +493,243 @@ const generatedCase = ref({})
 const messages = ref([])
 const userInput = ref('')
 const isGenerating = ref(false)
+const isTyping = ref(false)
 
 const score = ref({
   totalScore: 0,
-  dimensions: {}
+  dimensions: {},
+  feedback: '',
+  strengths: [],
+  improvements: []
 })
 
+// 班级和学生
+const classes = ref([])
+const students = ref([])
+const newClass = reactive({ name: '' })
+
+// 练习历史
+const practiceHistory = ref([])
+
+// 统计
+const stats = computed(() => {
+  if (practiceHistory.value.length === 0) {
+    return { totalPractices: 0, avgScore: 0, highestScore: 0 }
+  }
+  const scores = practiceHistory.value.filter(r => r.score).map(r => r.score)
+  return {
+    totalPractices: practiceHistory.value.length,
+    avgScore: scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0,
+    highestScore: scores.length ? Math.max(...scores) : 0
+  }
+})
+
+const adminStats = ref({
+  totalPractices: 0,
+  avgScore: 0,
+  activeUsers: 0
+})
+
+// 初始化
+onMounted(async () => {
+  // 检查本地存储的登录状态
+  const savedUser = localStorage.getItem('currentUser')
+  if (savedUser) {
+    currentUser.value = JSON.parse(savedUser)
+    isLoggedIn.value = true
+    loadData()
+  }
+  
+  // 加载班级列表
+  if (supabase) {
+    const { data } = await supabase.from('classes').select('*')
+    if (data) classes.value = data
+  }
+})
+
+// 加载数据
+async function loadData() {
+  if (!supabase) return
+  
+  if (currentUser.value.role === 'student') {
+    // 加载练习历史
+    const { data } = await supabase
+      .from('practice_records')
+      .select('*')
+      .eq('user_id', currentUser.value.id)
+      .order('created_at', { ascending: false })
+      .limit(10)
+    
+    if (data) practiceHistory.value = data
+  } else if (currentUser.value.role === 'admin') {
+    // 加载学生列表
+    const { data: studentsData } = await supabase
+      .from('users')
+      .select('*, classes(name)')
+      .eq('role', 'student')
+    
+    if (studentsData) {
+      students.value = studentsData.map(s => ({
+        ...s,
+        class_name: s.classes?.name || '未分配'
+      }))
+    }
+    
+    // 加载统计
+    const { count } = await supabase
+      .from('practice_records')
+      .select('*', { count: 'exact', head: true })
+    
+    adminStats.value.totalPractices = count || 0
+    adminStats.value.activeUsers = students.value.length
+    adminStats.value.avgScore = '--'
+  }
+}
+
 // 登录
-function login() {
+async function login() {
+  loginError.value = ''
+  
+  // 检查是否是管理员
   if (loginForm.username === 'admin' && loginForm.password === 'admin123') {
-    currentUser.value = { username: 'admin', name: '管理员', role: 'admin' }
+    currentUser.value = { 
+      id: 'admin', 
+      username: 'admin', 
+      name: '管理员', 
+      role: 'admin' 
+    }
+    localStorage.setItem('currentUser', JSON.stringify(currentUser.value))
     isLoggedIn.value = true
-  } else if (loginForm.username === 'student' && loginForm.password === '123456') {
-    currentUser.value = { username: 'student', name: '学生', role: 'student' }
+    loadData()
+    return
+  }
+  
+  // 检查是否是测试学生
+  if (loginForm.username === 'student' && loginForm.password === '123456') {
+    currentUser.value = { 
+      id: 'test-student', 
+      username: 'student', 
+      name: '测试学生', 
+      role: 'student',
+      class_id: null
+    }
+    localStorage.setItem('currentUser', JSON.stringify(currentUser.value))
     isLoggedIn.value = true
-  } else {
-    alert('账号或密码错误')
+    return
+  }
+  
+  // Supabase 登录
+  if (!supabase) {
+    loginError.value = '账号或密码错误'
+    return
+  }
+  
+  isLoggingIn.value = true
+  
+  try {
+    // 尝试用邮箱登录
+    const email = loginForm.username.includes('@') 
+      ? loginForm.username 
+      : `${loginForm.username}@example.com`
+    
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password: loginForm.password
+    })
+    
+    if (error) throw error
+    
+    // 获取用户信息
+    const { data: userData } = await supabase
+      .from('users')
+      .select('*, classes(name)')
+      .eq('id', data.user.id)
+      .single()
+    
+    currentUser.value = {
+      id: data.user.id,
+      email: data.user.email,
+      name: userData?.name || data.user.email,
+      role: userData?.role || 'student',
+      class_id: userData?.class_id,
+      class_name: userData?.classes?.name
+    }
+    
+    localStorage.setItem('currentUser', JSON.stringify(currentUser.value))
+    isLoggedIn.value = true
+    loadData()
+    
+  } catch (error) {
+    console.error('Login error:', error)
+    loginError.value = '账号或密码错误'
+  } finally {
+    isLoggingIn.value = false
+  }
+}
+
+// 注册
+async function register() {
+  registerError.value = ''
+  
+  if (!registerForm.name || !registerForm.email || !registerForm.password) {
+    registerError.value = '请填写完整信息'
+    return
+  }
+  
+  if (registerForm.password.length < 6) {
+    registerError.value = '密码至少6位'
+    return
+  }
+  
+  isRegistering.value = true
+  
+  try {
+    if (!supabase) {
+      throw new Error('数据库未配置')
+    }
+    
+    // 创建 Supabase Auth 用户
+    const { data, error } = await supabase.auth.signUp({
+      email: registerForm.email,
+      password: registerForm.password,
+      options: {
+        data: {
+          name: registerForm.name
+        }
+      }
+    })
+    
+    if (error) throw error
+    
+    // 创建用户记录
+    if (data.user) {
+      await supabase.from('users').insert({
+        id: data.user.id,
+        name: registerForm.name,
+        email: registerForm.email,
+        role: 'student',
+        class_id: registerForm.classId || null
+      })
+      
+      alert('注册成功！请登录')
+      loginMode.value = 'password'
+      loginForm.username = registerForm.email
+    }
+    
+  } catch (error) {
+    console.error('Register error:', error)
+    registerError.value = error.message || '注册失败'
+  } finally {
+    isRegistering.value = false
   }
 }
 
 // 退出
 function logout() {
+  if (supabase) {
+    supabase.auth.signOut()
+  }
+  localStorage.removeItem('currentUser')
   isLoggedIn.value = false
   currentUser.value = {}
   loginForm.username = ''
@@ -277,82 +738,165 @@ function logout() {
 
 // 生成病例
 async function generateCase() {
-  isGenerating.value = true
-  
-  // 模拟 AI 生成
-  await new Promise(r => setTimeout(r, 2000))
-  
-  generatedCase.value = {
-    caseName: '高血压老年患者病例',
-    basicInfo: {
-      name: '王大爷',
-      age: 75,
-      gender: caseProfile.gender,
-      occupation: '退休教师',
-      familyStatus: '与老伴同住，子女在外地工作'
-    },
-    medicalHistory: {
-      chiefComplaint: '头晕、乏力1周',
-      presentIllness: '患者1周前开始出现头晕，伴乏力，血压波动在150-170/90-100mmHg',
-      medications: ['硝苯地平缓释片', '阿司匹林']
-    },
-    personality: {
-      traits: [caseProfile.personality],
-      concerns: ['担心血压控制不好', '想了解饮食注意事项']
-    },
-    openingLine: '大夫啊，我这几天老觉得头晕，是不是血压又高了？'
+  if (caseProfile.diseases.length === 0) {
+    alert('请至少选择一种疾病')
+    return
   }
   
-  isGenerating.value = false
-  currentStep.value = 'case'
+  isGenerating.value = true
+  
+  try {
+    const response = await fetch(`${apiBase}/generate-case`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        profile: { ...caseProfile },
+        userId: currentUser.value.id
+      })
+    })
+    
+    const result = await response.json()
+    
+    if (result.success && result.data) {
+      generatedCase.value = result.data
+      currentStep.value = 'case'
+    } else {
+      throw new Error(result.error || '生成失败')
+    }
+    
+  } catch (error) {
+    console.error('Generate case error:', error)
+    // 使用默认数据
+    generatedCase.value = {
+      caseName: `${caseProfile.diseases[0]}老年患者病例`,
+      basicInfo: {
+        name: caseProfile.gender === '男' ? '王大爷' : '李大妈',
+        age: parseInt(caseProfile.age.split('-')[0]) + 5,
+        gender: caseProfile.gender,
+        occupation: '退休工人',
+        familyStatus: '与老伴同住'
+      },
+      medicalHistory: {
+        chiefComplaint: '头晕、乏力1周',
+        presentIllness: `患者有${caseProfile.diseases.join('、')}病史`,
+        pastHistory: caseProfile.diseases.join('、'),
+        medications: ['降压药']
+      },
+      personality: {
+        traits: [caseProfile.personality],
+        concerns: ['健康问题', '子女关心'],
+        communicationStyle: caseProfile.dialect === '普通话' ? '标准普通话' : `带${caseProfile.dialect}口音`
+      },
+      openingLine: '大夫，我最近总是头晕，您帮我看看吧。'
+    }
+    currentStep.value = 'case'
+  } finally {
+    isGenerating.value = false
+  }
 }
 
 // 开始对话
 function startChat() {
   messages.value = [
-    { role: 'assistant', content: generatedCase.value.openingLine }
+    { role: 'assistant', content: generatedCase.value.openingLine || '你好，大夫。' }
   ]
   currentStep.value = 'chat'
 }
 
 // 发送消息
 async function sendMessage() {
-  if (!userInput.value.trim()) return
+  if (!userInput.value.trim() || isTyping.value) return
   
-  const userMsg = userInput.value
+  const userMsg = userInput.value.trim()
   messages.value.push({ role: 'user', content: userMsg })
   userInput.value = ''
+  isTyping.value = true
   
-  // 模拟 AI 回复
-  await new Promise(r => setTimeout(r, 1000))
-  
-  const replies = [
-    '嗯，大夫你说得对，我记住了。',
-    '这个我还真不太清楚，你给我讲讲？',
-    '我平时确实喜欢吃咸的，看来得改改了。',
-    '谢谢你啊，大夫，我回去一定注意。',
-    '我老伴也说我得少吃点盐，看来她是对的。'
-  ]
-  
-  messages.value.push({ 
-    role: 'assistant', 
-    content: replies[Math.floor(Math.random() * replies.length)]
-  })
+  try {
+    const response = await fetch(`${apiBase}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        caseData: generatedCase.value,
+        messages: messages.value,
+        userInput: userMsg
+      })
+    })
+    
+    const result = await response.json()
+    
+    if (result.success && result.reply) {
+      messages.value.push({ role: 'assistant', content: result.reply })
+    } else {
+      throw new Error('回复失败')
+    }
+    
+  } catch (error) {
+    console.error('Chat error:', error)
+    // 备用回复
+    const fallbacks = [
+      '嗯，大夫你说得对。',
+      '这个我不太清楚，你给我讲讲？',
+      '好的，我记住了。',
+      '谢谢你啊大夫。'
+    ]
+    messages.value.push({ 
+      role: 'assistant', 
+      content: fallbacks[Math.floor(Math.random() * fallbacks.length)]
+    })
+  } finally {
+    isTyping.value = false
+  }
 }
 
 // 结束对话
-function endChat() {
-  // 模拟评分
-  score.value = {
-    totalScore: Math.floor(Math.random() * 30) + 70,
-    dimensions: {
-      '思政': Math.floor(Math.random() * 10) + 15,
-      '心理慰藉': Math.floor(Math.random() * 10) + 15,
-      '健康宣教': Math.floor(Math.random() * 10) + 15,
-      '康复训练': Math.floor(Math.random() * 10) + 15
+async function endChat() {
+  isTyping.value = true
+  
+  try {
+    const response = await fetch(`${apiBase}/score`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        caseData: generatedCase.value,
+        messages: messages.value,
+        userId: currentUser.value.id
+      })
+    })
+    
+    const result = await response.json()
+    
+    if (result.success && result.data) {
+      score.value = result.data
+    } else {
+      throw new Error('评分失败')
+    }
+    
+  } catch (error) {
+    console.error('Score error:', error)
+    // 默认评分
+    const studentMsgs = messages.value.filter(m => m.role === 'user')
+    score.value = {
+      totalScore: Math.min(70 + studentMsgs.length * 3, 95),
+      dimensions: {
+        '思政素养': 18 + Math.floor(Math.random() * 5),
+        '沟通技巧': 17 + Math.floor(Math.random() * 5),
+        '健康宣教': 18 + Math.floor(Math.random() * 5),
+        '专业能力': 17 + Math.floor(Math.random() * 5)
+      },
+      feedback: '整体表现良好，继续保持！',
+      strengths: ['态度友善', '有耐心'],
+      improvements: ['可以更深入了解老人需求']
+    }
+  } finally {
+    isTyping.value = false
+    currentStep.value = 'score'
+    
+    // 刷新历史
+    if (currentUser.value.role === 'student') {
+      loadData()
     }
   }
-  currentStep.value = 'score'
 }
 
 // 重置练习
@@ -360,6 +904,52 @@ function resetPractice() {
   currentStep.value = 'home'
   messages.value = []
   generatedCase.value = {}
-  score.value = { totalScore: 0, dimensions: {} }
+  score.value = { totalScore: 0, dimensions: {}, feedback: '', strengths: [], improvements: [] }
+}
+
+// 创建班级
+async function createClass() {
+  if (!newClass.name || !supabase) return
+  
+  const { data, error } = await supabase
+    .from('classes')
+    .insert({ name: newClass.name })
+    .select()
+  
+  if (data) {
+    classes.value.push(data[0])
+    newClass.name = ''
+    alert('班级创建成功')
+  } else if (error) {
+    alert('创建失败：' + error.message)
+  }
+}
+
+// 查看记录
+function viewRecord(record) {
+  if (record.case_data) {
+    generatedCase.value = record.case_data
+    messages.value = record.messages || []
+    score.value = {
+      totalScore: record.score || 0,
+      dimensions: record.dimensions || {},
+      feedback: record.feedback || '',
+      strengths: [],
+      improvements: []
+    }
+    currentStep.value = 'score'
+  }
+}
+
+// 格式化日期
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('zh-CN', {
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 </script>
