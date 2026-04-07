@@ -289,6 +289,15 @@
                 </select>
               </div>
               
+              <div>
+                <label class="block text-gray-700 mb-2">老人称呼我为</label>
+                <input 
+                  v-model="caseProfile.studentTitle" 
+                  placeholder="如：大夫、护士、小伙子、闺女等"
+                  class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
               <button 
                 @click="generateCase" 
                 :disabled="isGenerating || (caseProfile.diseases.length === 0 && caseProfile.customDiseases.length === 0)"
@@ -611,7 +620,8 @@ const caseProfile = reactive({
   livingType: '有老伴',
   occupation: '退休工人',
   economicType: '有退休金',
-  hobby: '看电视'
+  hobby: '看电视',
+  studentTitle: '大夫'
 })
 
 const diseases = [
@@ -963,7 +973,8 @@ async function generateCase() {
         familyStatus: caseProfile.livingType,
         livingPlace: caseProfile.livingPlace,
         economicType: caseProfile.economicType,
-        hobby: caseProfile.hobby
+        hobby: caseProfile.hobby,
+        studentTitle: caseProfile.studentTitle || '大夫'
       },
       medicalHistory: {
         chiefComplaint: '头晕、乏力1周',

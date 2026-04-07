@@ -50,6 +50,9 @@ export async function handler(event, context) {
 ${dialectTips[dialect] || ''}
 像和邻居唠家常，不要像在医院看病。问什么答什么，可以顺便聊点别的。
 
+【称呼学生】
+称呼学生为"${caseInfo.basicInfo?.studentTitle || '大夫'}"，不要叫"大夫"。
+
 【示例】
 学生：今天量血压了吗？
 老人：量了量了，早上起来量的，145/90，医生说还行，让我继续吃药。
