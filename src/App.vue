@@ -1016,7 +1016,7 @@ async function generateCase() {
   "openingLine": "老人的开场白（要自然，符合老人身份和疾病情况）"
 }`
 
-    const response = await fetch('/generate-case', {
+    const response = await fetch('/api/generate-case', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -1182,8 +1182,10 @@ ${dialectTips[dialectName] || '用普通话'}
       }))
     ]
     
-    // 调用Cloudflare代理API
-    const response = await fetch('/chat', {
+    console.log('发送消息到API:', chatMessages)
+    
+    // 调用API
+    const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -1193,17 +1195,24 @@ ${dialectTips[dialectName] || '用普通话'}
       })
     })
     
+    console.log('API响应状态:', response.status)
+    
     if (!response.ok) {
+      const errorText = await response.text()
+      console.error('API错误:', errorText)
       throw new Error(`API错误: ${response.status}`)
     }
     
     const data = await response.json()
-    console.log('AI响应:', data)
+    console.log('API返回数据:', data)
     
     if (data.choices && data.choices[0]) {
       const reply = data.choices[0].message.content
       messages.value.push({ role: 'assistant', content: reply })
       speak(reply)
+    } else if (data.error) {
+      console.error('API返回错误:', data.error)
+      throw new Error(data.error)
     } else {
       throw new Error('回复格式错误')
     }
@@ -1459,7 +1468,7 @@ ${chatHistory}
   "improvements": ["改进建议1", "改进建议2"]
 }`
 
-    const response = await fetch('/score', {
+    const response = await fetch('/api/score', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
