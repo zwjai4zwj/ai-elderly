@@ -1210,24 +1210,34 @@ ${dialectTip}
     ]
     
     // 调用Supabase Edge Function
+    console.log('调用Edge Function:', EDGE_FUNCTION_URL)
+    console.log('发送消息:', chatMessages.slice(-1))
+    
     const response = await fetch(EDGE_FUNCTION_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: chatMessages })
     })
     
+    console.log('响应状态:', response.status)
+    
     if (response.ok) {
       const data = await response.json()
+      console.log('响应数据:', data)
       if (data.choices && data.choices[0]) {
         const reply = data.choices[0].message.content
         messages.value.push({ role: 'assistant', content: reply })
         speak(reply)
+      } else if (data.error) {
+        console.error('API错误:', data.error)
+        useFallbackReply(userMsg, { name, disease, studentTitle, dialect })
       } else {
-        // API返回格式错误，使用前端智能回复
+        console.error('格式错误:', data)
         useFallbackReply(userMsg, { name, disease, studentTitle, dialect })
       }
     } else {
-      // API调用失败，使用前端智能回复
+      const errorText = await response.text()
+      console.error('HTTP错误:', response.status, errorText)
       useFallbackReply(userMsg, { name, disease, studentTitle, dialect })
     }
     
