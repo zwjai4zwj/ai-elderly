@@ -1446,8 +1446,8 @@ async function speakWithXunfei(text, gender) {
       const wsUrl = `wss://${host}${path}?authorization=${authorization}&date=${encodeURIComponent(date)}&host=${host}`
       
       // 选择发音人（讯飞老年音色）
-      // x4_lingxiaoxuan_oral 老年女声, x4_lingxiaofeng_oral 老年男声
-      const voiceName = gender === '女' ? 'x4_lingxiaoxuan_oral' : 'x4_lingxiaofeng_oral'
+      // x4_xiuying 老年女声(秀英), x4_lingbosong 老年男声(聆伯松)
+      const voiceName = gender === '女' ? 'x4_xiuying' : 'x4_lingbosong'
       
       console.log('讯飞语音参数:', { voiceName, appId: config.appId })
       
@@ -1466,9 +1466,9 @@ async function speakWithXunfei(text, gender) {
           parameter: {
             tts: {
               vcn: voiceName,
-              speed: 30,  // 语速慢一点，更像老人
+              speed: 50,  // 语速正常
               volume: 60,
-              pitch: 40,  // 音调低一点
+              pitch: 45,  // 音调稍低，更像老人
               audio: {
                 encoding: 'lame',
                 sample_rate: 16000
