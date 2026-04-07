@@ -1149,6 +1149,10 @@ const dialectTips = {
 // Supabase Edge Function URL
 const EDGE_FUNCTION_URL = 'https://todnsmeovkpmniqcwucm.supabase.co/functions/v1/chat'
 
+// 版本标识，用于调试
+const CODE_VERSION = 'v2.0-' + Date.now()
+console.log('🔄 前端代码版本:', CODE_VERSION)
+
 // 发送消息
 async function sendMessage() {
   if (!userInput.value.trim() || isTyping.value) return
@@ -1209,17 +1213,18 @@ ${dialectTip}
       }))
     ]
     
-    // 调用Supabase Edge Function
-    console.log('调用Edge Function:', EDGE_FUNCTION_URL)
-    console.log('发送消息:', chatMessages.slice(-1))
+    // 调用Supabase Edge Function（加时间戳防止缓存）
+    const url = EDGE_FUNCTION_URL + '?t=' + Date.now()
+    console.log('🚀 调用Edge Function:', url)
+    console.log('📤 发送消息:', chatMessages.slice(-1))
     
-    const response = await fetch(EDGE_FUNCTION_URL, {
+    const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: chatMessages })
     })
     
-    console.log('响应状态:', response.status)
+    console.log('📥 响应状态:', response.status)
     
     if (response.ok) {
       const data = await response.json()
