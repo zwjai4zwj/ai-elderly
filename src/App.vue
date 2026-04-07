@@ -1332,6 +1332,7 @@ function getXunfeiConfig() {
 // 语音播放功能（讯飞语音合成）
 function speak(text) {
   const gender = generatedCase.value.basicInfo?.gender || '男'
+  console.log('准备播放语音:', text.substring(0, 20), '性别:', gender)
   
   // 先尝试讯飞语音，失败则降级到浏览器语音
   speakWithXunfei(text, gender).catch((err) => {
@@ -1346,6 +1347,7 @@ async function speakWithXunfei(text, gender) {
     try {
       // 随机选择一个应用配置
       const config = getXunfeiConfig()
+      console.log('使用讯飞应用:', config.appId)
       
       // 生成鉴权URL
       const host = 'tts-api.xfyun.cn'
@@ -1360,14 +1362,19 @@ async function speakWithXunfei(text, gender) {
       
       const wsUrl = `wss://${host}${path}?authorization=${authorization}&date=${encodeURIComponent(date)}&host=${host}`
       
-      // 选择发音人（讯飞在线语音合成发音人）
-      const voiceName = gender === '女' ? 'xiaoyan' : 'xiaofeng'
+      // 选择发音人（讯飞老年音色）
+      // x4_lingxiaoxuan_oral 老年女声, x4_lingxiaofeng_oral 老年男声
+      const voiceName = gender === '女' ? 'x4_lingxiaoxuan_oral' : 'x4_lingxiaofeng_oral'
+      
+      console.log('讯飞语音参数:', { voiceName, appId: config.appId })
       
       // 建立WebSocket连接
       const ws = new WebSocket(wsUrl)
       let audioChunks = []
+      let hasError = false
       
       ws.onopen = () => {
+        console.log('讯飞WebSocket已连接')
         const request = {
           header: {
             app_id: config.appId,
@@ -1376,9 +1383,9 @@ async function speakWithXunfei(text, gender) {
           parameter: {
             tts: {
               vcn: voiceName,
-              speed: 40,
-              volume: 50,
-              pitch: 50,
+              speed: 30,  // 语速慢一点，更像老人
+              volume: 60,
+              pitch: 40,  // 音调低一点
               audio: {
                 encoding: 'lame',
                 sample_rate: 16000
@@ -1396,13 +1403,21 @@ async function speakWithXunfei(text, gender) {
         ws.send(JSON.stringify(request))
       }
       
+      ws.onerror = (err) => {
+        console.error('讯飞WebSocket错误:', err)
+        hasError = true
+        reject(new Error('WebSocket连接失败'))
+      }
+      
       ws.onmessage = (event) => {
         try {
           const response = JSON.parse(event.data)
           
           if (response.header.code !== 0) {
+            console.error('讯飞返回错误:', response.header)
+            hasError = true
             ws.close()
-            reject(new Error(response.header.message))
+            reject(new Error(response.header.message || '讯飞API错误'))
             return
           }
           
@@ -1412,30 +1427,36 @@ async function speakWithXunfei(text, gender) {
           
           if (response.header.status === 2) {
             ws.close()
-            playAudioFromBase64(audioChunks.join(''))
-            resolve()
+            if (!hasError && audioChunks.length > 0) {
+              console.log('讯飞语音合成成功，开始播放')
+              playAudioFromBase64(audioChunks.join(''))
+              resolve()
+            } else {
+              reject(new Error('音频数据为空'))
+            }
           }
         } catch (e) {
+          console.error('解析讯飞响应失败:', e)
+          hasError = true
           ws.close()
           reject(e)
         }
       }
       
-      ws.onerror = (error) => {
-        reject(error)
-      }
-      
+      // 超时处理
       setTimeout(() => {
-        if (ws.readyState === WebSocket.OPEN) {
+        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
           ws.close()
+          reject(new Error('讯飞连接超时'))
         }
-        reject(new Error('timeout'))
-      }, 30000)
+      }, 10000)
       
     } catch (error) {
+      console.error('讯飞语音初始化失败:', error)
       reject(error)
     }
   })
+}
 }
 
 // HMAC-SHA256
@@ -1611,15 +1632,22 @@ function resetPractice() {
 async function createClass() {
   if (!newClass.name) return
   
+  // 生成班级代码
+  const code = Math.random().toString(36).substr(2, 6).toUpperCase()
+  
   const { data, error } = await supabase
     .from('classes')
-    .insert({ name: newClass.name })
+    .insert({ 
+      name: newClass.name,
+      code: code,
+      student_count: 0
+    })
     .select()
   
   if (data) {
     classes.value.push(data[0])
+    alert(`班级创建成功！\n班级名称：${newClass.name}\n班级代码：${code}`)
     newClass.name = ''
-    alert('班级创建成功！')
   } else if (error) {
     alert('创建失败：' + error.message)
   }
