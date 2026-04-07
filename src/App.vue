@@ -561,6 +561,30 @@
                   添加学生
                 </button>
               </div>
+              
+              <!-- 批量导入 -->
+              <div class="mt-4 pt-4 border-t">
+                <h4 class="font-bold mb-2 text-sm">批量导入学生</h4>
+                <select v-model="batchClassId" class="w-full px-3 py-2 border rounded-lg mb-2">
+                  <option value="">选择班级</option>
+                  <option v-for="cls in classes" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
+                </select>
+                <textarea 
+                  v-model="batchStudents" 
+                  placeholder="每行一个学生姓名，例如：&#10;张三&#10;李四&#10;王五"
+                  class="w-full px-3 py-2 border rounded-lg h-24 text-sm"
+                ></textarea>
+                <button 
+                  @click="batchImportStudents"
+                  :disabled="!batchClassId || !batchStudents.trim()"
+                  class="w-full mt-2 py-2 bg-blue-600 text-white rounded-lg disabled:bg-gray-400 text-sm"
+                >
+                  批量导入
+                </button>
+                <p v-if="batchImportMsg" class="text-sm mt-1" :class="batchImportSuccess ? 'text-green-600' : 'text-red-500'">
+                  {{ batchImportMsg }}
+                </p>
+              </div>
             </div>
             
             <!-- 学生列表 -->
@@ -687,6 +711,10 @@ const classes = ref([])
 const students = ref([])
 const newClass = reactive({ name: '' })
 const newStudent = reactive({ name: '', classId: '', password: '' })
+const batchClassId = ref('')
+const batchStudents = ref('')
+const batchImportMsg = ref('')
+const batchImportSuccess = ref(false)
 
 // 练习历史
 const practiceHistory = ref([])
@@ -1118,7 +1146,7 @@ const dialectTips = {
   '澳门话': '用澳门口音回复'
 }
 
-// 发送消息
+// 发送消息（纯前端智能回复）
 async function sendMessage() {
   if (!userInput.value.trim() || isTyping.value) return
   
@@ -1128,111 +1156,166 @@ async function sendMessage() {
   isTyping.value = true
   
   try {
-    // 构建老人信息
     const caseInfo = generatedCase.value
     const name = caseInfo.basicInfo?.name || '王大爷'
     const age = caseInfo.basicInfo?.age || 75
     const gender = caseInfo.basicInfo?.gender || '男'
     const disease = caseInfo.medicalHistory?.pastHistory || '高血压'
-    const traits = caseInfo.personality?.traits?.join('，') || '普通'
-    const dialect = caseInfo.personality?.communicationStyle || caseProfile.dialect || '普通话'
-    const livingPlace = caseInfo.basicInfo?.livingPlace || caseProfile.livingPlace || '家里'
-    const livingType = (caseInfo.basicInfo?.familyStatus || caseProfile.livingTypes || ['独居']).join('、')
-    const occupation = caseInfo.basicInfo?.occupation || caseProfile.occupation || '普通工人'
-    const economy = (caseInfo.basicInfo?.economicType || caseProfile.economicTypes || ['退休金']).join('、')
-    const hobbies = (caseInfo.basicInfo?.hobby || caseProfile.hobbies || ['看电视']).join('、')
     const studentTitle = caseInfo.basicInfo?.studentTitle || caseProfile.studentTitle || '大夫'
+    const dialect = caseProfile.dialect || '普通话'
     
-    // 提取方言名称
-    const dialectName = dialect.includes('口音') ? dialect.replace('带', '').replace('口音', '') : dialect
+    // 智能回复
+    const reply = generateSmartReply(userMsg, { name, age, gender, disease, studentTitle, dialect })
     
-    const systemPrompt = `你是一位${age}岁${gender}老人，名叫${name}。
-
-【你的情况】
-- 患有${disease}
-- 住${livingPlace}，${livingType}
-- 以前是${occupation}
-- 平时爱${hobbies}
-
-【重要规则】
-你是真实的老人，学生问什么就答什么！
-- 问"你好/您好" → 热情回应，比如"哎哟，大夫来了啊，快坐快坐"
-- 问血压 → 说具体数值，如"今早量了，135/85"
-- 问吃药 → 说吃了没，偶尔会忘
-- 问身体 → 说哪里不舒服
-- 问心情 → 说心里话，想孩子、担心病等
-
-【说话风格】
-${dialectTips[dialectName] || '用普通话'}
-称呼学生为"${studentTitle}"
-像跟邻居唠嗑一样自然，可以啰嗦，可以带情绪
-
-【绝对禁止】
-× 不要说"好的我记住了"
-× 不要说"我不清楚你给我讲讲"
-× 不要用书面语
-× 每次回复要不一样`
-
-    // 构建消息
-    const chatMessages = [
-      { role: 'system', content: systemPrompt },
-      ...messages.value.map(m => ({
-        role: m.role === 'assistant' ? 'assistant' : 'user',
-        content: m.content
-      }))
-    ]
+    // 模拟打字延迟
+    await new Promise(r => setTimeout(r, 500 + Math.random() * 500))
     
-    console.log('发送消息到API:', chatMessages)
-    
-    // 调用API
-    const response = await fetch('/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        messages: chatMessages
-      })
-    })
-    
-    console.log('API响应状态:', response.status)
-    
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('API错误:', errorText)
-      throw new Error(`API错误: ${response.status}`)
-    }
-    
-    const data = await response.json()
-    console.log('API返回数据:', data)
-    
-    if (data.choices && data.choices[0]) {
-      const reply = data.choices[0].message.content
-      messages.value.push({ role: 'assistant', content: reply })
-      speak(reply)
-    } else if (data.error) {
-      console.error('API返回错误:', data.error)
-      throw new Error(data.error)
-    } else {
-      throw new Error('回复格式错误')
-    }
+    messages.value.push({ role: 'assistant', content: reply })
+    speak(reply)
     
   } catch (error) {
     console.error('Chat error:', error)
-    // 更自然的fallback
-    const name = generatedCase.value.basicInfo?.name || '老人'
-    const fallbacks = [
-      `哎哟大夫，你说得对。`,
-      `嗯嗯，${name}我听着呢。`,
-      `好嘞，我明白了。`
-    ]
-    messages.value.push({ 
-      role: 'assistant', 
-      content: fallbacks[Math.floor(Math.random() * fallbacks.length)]
-    })
   } finally {
     isTyping.value = false
   }
+}
+
+// 智能回复生成函数
+function generateSmartReply(userMsg, elder) {
+  const { name, age, gender, disease, studentTitle, dialect } = elder
+  const msg = userMsg.toLowerCase()
+  
+  // 方言口语
+  const dialectWords = {
+    '东北话': ['哎呀妈呀', '咋整', '那必须的', '嘎哈', '嗯呐'],
+    '四川话': ['要得', '巴适', '撒', '啷个', '晓得咯'],
+    '河南话': ['中', '弄啥嘞', '可得劲', '中不中'],
+    '山东话': ['俺', '中', '杠杠的', '好好好'],
+    '广东话': ['冇问题', '靓仔', '好得', '系啊'],
+    '陕西话': ['额', '么麻达', '嘹咋咧', '好着呢'],
+    '天津话': ['介是嘛', '嘛呢', '倍儿', '好好好']
+  }
+  
+  const slang = dialectWords[dialect] ? 
+    dialectWords[dialect][Math.floor(Math.random() * dialectWords[dialect].length)] + ' ' : ''
+  
+  // 问候
+  if (msg.match(/你好|您好|哈喽|hi|hello/)) {
+    return `${slang}哎哟，${studentTitle}来了啊！快坐快坐，我这老腰正好想找人唠唠。`
+  }
+  
+  // 血压
+  if (msg.includes('血压')) {
+    const sys = 120 + Math.floor(Math.random() * 40)
+    const dia = 70 + Math.floor(Math.random() * 30)
+    const status = sys > 140 ? '有点高' : sys < 120 ? '还行' : '还可以'
+    return `${slang}今早量了，${sys}/${dia}，${status}，${studentTitle}你看这数值咋样？药一直在吃呢。`
+  }
+  
+  // 吃药
+  if (msg.includes('药') || msg.includes('吃药')) {
+    const replies = [
+      `${slang}药啊，今早吃了，降压药、降糖药一把一把的，都成药罐子了。`,
+      `${slang}吃了吃了，有时候会忘，岁数大了记性不行。`,
+      `${slang}今天还没吃呢，你不说我都忘了，${studentTitle}你提醒得对。`,
+      `${slang}药是吃了，可这病啊，吃着药也不见好多少，老了就这样。`
+    ]
+    return replies[Math.floor(Math.random() * replies.length)]
+  }
+  
+  // 身体/健康
+  if (msg.match(/身体|怎么样|舒服|难受|感觉/)) {
+    const replies = [
+      `${slang}身体啊，老毛病了，${disease}这么多年，时好时坏的。`,
+      `${slang}还能咋样，老了就这样，这儿疼那儿酸的，习惯了。`,
+      `${slang}腿脚不行了，下楼买菜都费劲，爬个三楼得歇两回。`,
+      `${slang}这几天还行，就是晚上睡不好，老醒，可能是想孩子们了。`
+    ]
+    return replies[Math.floor(Math.random() * replies.length)]
+  }
+  
+  // 睡眠
+  if (msg.match(/睡|觉|失眠/)) {
+    const replies = [
+      `${slang}睡觉啊，晚上老醒，一宿能醒四五次，可能是岁数大了。`,
+      `${slang}睡不好，躺床上两三个小时才能睡着，睡着了还老做梦。`,
+      `${slang}我这觉啊，越来越少了，早上四五点就醒，睡不着了。`
+    ]
+    return replies[Math.floor(Math.random() * replies.length)]
+  }
+  
+  // 饮食
+  if (msg.match(/吃|饭|饮食|胃口/)) {
+    const replies = [
+      `${slang}吃饭还行，就是牙不行了，硬的咬不动，就喝点粥吃点软的。`,
+      `${slang}一个人住，懒得做，有时候就凑合一口。`,
+      `${slang}医生说少吃盐少吃油，可我这嘴吧，吃清淡了没滋味啊。`
+    ]
+    return replies[Math.floor(Math.random() * replies.length)]
+  }
+  
+  // 子女
+  if (msg.match(/孩子|子女|儿女|想/)) {
+    const replies = [
+      `${slang}孩子们啊，都忙，一年也就回来一两回，过年能见见面。`,
+      `${slang}能不想吗？我闺女在外地，儿子也忙，电话倒是常打。`,
+      `${slang}想是想，可不想打扰他们，他们工作忙，有家有孩子的。`,
+      `${slang}有时候做梦梦到他们小时候，醒来枕巾都湿了。`
+    ]
+    return replies[Math.floor(Math.random() * replies.length)]
+  }
+  
+  // 心情
+  if (msg.match(/心情|高兴|开心|烦/)) {
+    const replies = [
+      `${slang}心情啊，还行吧，有时候想孩子们了会难过，习惯了。`,
+      `${slang}今天你来了，心里高兴，有人陪着说说话挺好的。`,
+      `${slang}有时候会烦躁，觉得自己老了，没用了，成了孩子们的负担。`
+    ]
+    return replies[Math.floor(Math.random() * replies.length)]
+  }
+  
+  // 运动
+  if (msg.match(/运动|活动|锻炼|散步|走/)) {
+    const replies = [
+      `${slang}运动啊，有时候下楼走走，腿脚不好也走不远。`,
+      `${slang}在家做做操，甩甩手踢踢腿的，也不敢剧烈运动。`,
+      `${slang}小区里有些老伙伴，有时候一起遛弯，聊聊家常。`
+    ]
+    return replies[Math.floor(Math.random() * replies.length)]
+  }
+  
+  // 疼痛
+  if (msg.match(/疼|痛|不舒服/)) {
+    const parts = ['腰', '腿', '膝盖', '肩膀', '后背']
+    const part = parts[Math.floor(Math.random() * parts.length)]
+    const replies = [
+      `${slang}${part}疼，老毛病了，贴了膏药也不管用。`,
+      `${slang}这几天${part}不太舒服，可能是变天了。`,
+      `${slang}这儿那儿都疼，老了零件都老化了，${studentTitle}你说正常不？`
+    ]
+    return replies[Math.floor(Math.random() * replies.length)]
+  }
+  
+  // 疾病相关
+  if (msg.includes(disease) || msg.includes('病')) {
+    const replies = [
+      `${slang}${disease}啊，好多年了，一直在吃药控制。`,
+      `${slang}这病吧，时好时坏，也没啥好办法，就这样熬着呗。`,
+      `${slang}医生说要注意饮食，可我这嘴吧，管不住。`
+    ]
+    return replies[Math.floor(Math.random() * replies.length)]
+  }
+  
+  // 默认回复
+  const defaults = [
+    `${slang}嗯，${studentTitle}你说得对，我记住了。`,
+    `${slang}这个啊，我还真没想过，你给我讲讲？`,
+    `${slang}哦，是这样啊，活到老学到老嘛。`,
+    `${slang}行，我知道了，${studentTitle}你真细心。`,
+    `${slang}嗯嗯，我听着呢，你继续说。`
+  ]
+  return defaults[Math.floor(Math.random() * defaults.length)]
 }
 
 // 讯飞语音配置（多个应用轮换使用）
@@ -1550,10 +1633,9 @@ async function createStudent() {
   }
   
   const password = newStudent.password || '123456'
-  const email = `${Date.now()}@student.local` // 生成临时邮箱
+  const email = `${Date.now()}@student.local`
   
   try {
-    // 创建用户记录（简化版，无需Supabase Auth）
     const studentId = 'student_' + Date.now()
     const { data, error } = await supabase
       .from('users')
@@ -1583,6 +1665,70 @@ async function createStudent() {
     }
   } catch (err) {
     alert('创建失败：' + err.message)
+  }
+}
+
+// 批量导入学生
+async function batchImportStudents() {
+  if (!batchClassId.value || !batchStudents.value.trim()) {
+    batchImportMsg.value = '请选择班级并输入学生姓名'
+    batchImportSuccess.value = false
+    return
+  }
+  
+  const names = batchStudents.value.trim().split('\n').map(n => n.trim()).filter(n => n)
+  if (names.length === 0) {
+    batchImportMsg.value = '请输入至少一个学生姓名'
+    batchImportSuccess.value = false
+    return
+  }
+  
+  batchImportMsg.value = '正在导入...'
+  
+  try {
+    const className = classes.value.find(c => c.id === batchClassId.value)?.name || ''
+    let successCount = 0
+    
+    for (const name of names) {
+      const studentId = 'student_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+      const email = `${studentId}@student.local`
+      
+      const { data, error } = await supabase
+        .from('users')
+        .insert({
+          id: studentId,
+          name: name,
+          email: email,
+          role: 'student',
+          class_id: batchClassId.value,
+          password: '123456'
+        })
+        .select()
+      
+      if (data) {
+        students.value.unshift({
+          id: studentId,
+          name: name,
+          email: email,
+          class_name: className
+        })
+        successCount++
+      }
+    }
+    
+    batchImportMsg.value = `成功导入 ${successCount} 名学生，默认密码：123456`
+    batchImportSuccess.value = true
+    batchStudents.value = ''
+    
+    // 更新班级学生数
+    const { data: classData } = await supabase
+      .from('classes')
+      .update({ student_count: successCount })
+      .eq('id', batchClassId.value)
+    
+  } catch (err) {
+    batchImportMsg.value = '导入失败：' + err.message
+    batchImportSuccess.value = false
   }
 }
 
