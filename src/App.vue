@@ -977,22 +977,72 @@ async function generateCase() {
   isGenerating.value = true
   
   try {
-    const response = await fetch(`${apiBase}/generate-case`, {
+    // 直接调用DeepSeek API生成病例
+    const prompt = `请为一个老年患者生成详细病例信息，以JSON格式返回。
+
+患者信息：
+- 年龄范围：${caseProfile.age}
+- 性别：${caseProfile.gender}
+- 疾病：${allDiseases.join('、')}
+- 性格：${caseProfile.personality}
+- 方言：${caseProfile.dialect}
+- 职业：${caseProfile.occupation}
+- 居住：${caseProfile.livingPlace}，${caseProfile.livingTypes.join('、')}
+- 经济：${caseProfile.economicTypes.join('、')}
+- 爱好：${caseProfile.hobbies.join('、')}
+
+请返回如下JSON格式（不要有其他内容）：
+{
+  "caseName": "病例名称",
+  "basicInfo": {
+    "name": "老人姓名（根据性别起一个常见的中国老人名字）",
+    "age": 年龄数字,
+    "gender": "性别",
+    "occupation": "职业",
+    "familyStatus": "家庭状况",
+    "livingPlace": "居住地",
+    "economicType": "经济类型",
+    "hobby": "爱好",
+    "studentTitle": "${caseProfile.studentTitle || '大夫'}"
+  },
+  "medicalHistory": {
+    "chiefComplaint": "主诉症状",
+    "presentIllness": "现病史详细描述",
+    "pastHistory": "既往病史",
+    "medications": ["正在服用的药物"]
+  },
+  "personality": {
+    "traits": ["性格特点"],
+    "concerns": ["关心的问题"],
+    "communicationStyle": "沟通风格"
+  },
+  "openingLine": "老人的开场白（要自然，符合老人身份和疾病情况）"
+}`
+
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+      },
       body: JSON.stringify({
-        profile: { ...caseProfile },
-        userId: currentUser.value.id
+        model: 'deepseek-chat',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.8,
+        max_tokens: 1000
       })
     })
     
-    const result = await response.json()
+    const data = await response.json()
+    const content = data.choices[0].message.content
     
-    if (result.success && result.data) {
-      generatedCase.value = result.data
+    // 提取JSON
+    const jsonMatch = content.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+      generatedCase.value = JSON.parse(jsonMatch[0])
       currentStep.value = 'case'
     } else {
-      throw new Error(result.error || '生成失败')
+      throw new Error('解析失败')
     }
     
   } catch (error) {
@@ -1400,22 +1450,67 @@ async function endChat() {
   isTyping.value = true
   
   try {
-    const response = await fetch(`${apiBase}/score`, {
+    // 直接调用DeepSeek API进行评分
+    const caseInfo = generatedCase.value
+    const name = caseInfo.basicInfo?.name || '老人'
+    const disease = caseInfo.medicalHistory?.pastHistory || '疾病'
+    
+    const chatHistory = messages.value.map(m => 
+      `${m.role === 'user' ? '学生' : name}: ${m.content}`
+    ).join('\n')
+
+    const prompt = `请对以下学生与老人的对话进行评分，以JSON格式返回。
+
+老人信息：
+- 姓名：${name}
+- 疾病：${disease}
+
+对话记录：
+${chatHistory}
+
+评分维度（每项满分25分）：
+1. 思政素养：体现人文关怀、尊重老人、职业道德
+2. 沟通技巧：语言表达、倾听能力、共情能力
+3. 健康宣教：疾病知识讲解、用药指导、健康建议
+4. 专业能力：评估准确、问题处理、专业知识运用
+
+请返回如下JSON格式（不要有其他内容）：
+{
+  "totalScore": 总分(0-100),
+  "dimensions": {
+    "思政素养": 分数(0-25),
+    "沟通技巧": 分数(0-25),
+    "健康宣教": 分数(0-25),
+    "专业能力": 分数(0-25)
+  },
+  "feedback": "整体评价（50字以内）",
+  "strengths": ["优点1", "优点2", "优点3"],
+  "improvements": ["改进建议1", "改进建议2"]
+}`
+
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+      },
       body: JSON.stringify({
-        caseData: generatedCase.value,
-        messages: messages.value,
-        userId: currentUser.value.id
+        model: 'deepseek-chat',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.5,
+        max_tokens: 500
       })
     })
     
-    const result = await response.json()
+    const data = await response.json()
+    const content = data.choices[0].message.content
     
-    if (result.success && result.data) {
-      score.value = result.data
+    // 提取JSON
+    const jsonMatch = content.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+      score.value = JSON.parse(jsonMatch[0])
     } else {
-      throw new Error('评分失败')
+      throw new Error('解析失败')
     }
     
   } catch (error) {
