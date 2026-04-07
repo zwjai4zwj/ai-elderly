@@ -229,9 +229,38 @@
                 <label class="block text-gray-700 mb-2">方言偏好</label>
                 <select v-model="caseProfile.dialect" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
                   <option value="普通话">普通话</option>
+                  <option value="北京话">北京话</option>
+                  <option value="天津话">天津话</option>
+                  <option value="河北话">河北话</option>
                   <option value="山西话">山西话</option>
+                  <option value="内蒙古话">内蒙古话</option>
                   <option value="东北话">东北话</option>
+                  <option value="上海话">上海话</option>
+                  <option value="江苏话">江苏话</option>
+                  <option value="浙江话">浙江话</option>
+                  <option value="安徽话">安徽话</option>
+                  <option value="福建话">福建话</option>
+                  <option value="江西话">江西话</option>
+                  <option value="山东话">山东话</option>
+                  <option value="河南话">河南话</option>
+                  <option value="湖北话">湖北话</option>
+                  <option value="湖南话">湖南话</option>
+                  <option value="广东话">广东话</option>
+                  <option value="广西话">广西话</option>
+                  <option value="海南话">海南话</option>
                   <option value="四川话">四川话</option>
+                  <option value="重庆话">重庆话</option>
+                  <option value="贵州话">贵州话</option>
+                  <option value="云南话">云南话</option>
+                  <option value="西藏话">西藏话</option>
+                  <option value="陕西话">陕西话</option>
+                  <option value="甘肃话">甘肃话</option>
+                  <option value="青海话">青海话</option>
+                  <option value="宁夏话">宁夏话</option>
+                  <option value="新疆话">新疆话</option>
+                  <option value="台湾话">台湾话</option>
+                  <option value="香港话">香港话</option>
+                  <option value="澳门话">澳门话</option>
                 </select>
               </div>
               
@@ -246,14 +275,15 @@
               </div>
               
               <div>
-                <label class="block text-gray-700 mb-2">居住类型</label>
-                <select v-model="caseProfile.livingType" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                  <option value="独居">独居</option>
-                  <option value="丧偶">丧偶</option>
-                  <option value="有老伴">有老伴</option>
-                  <option value="无儿女">无儿女</option>
-                  <option value="儿女在外地">儿女在外地</option>
-                </select>
+                <label class="block text-gray-700 mb-2">居住类型（可多选）</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <label v-for="t in livingTypeOptions" :key="t" 
+                         class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                         :class="caseProfile.livingTypes.includes(t) ? 'border-blue-500 bg-blue-50' : ''">
+                    <input type="checkbox" v-model="caseProfile.livingTypes" :value="t" class="mr-2">
+                    {{ t }}
+                  </label>
+                </div>
               </div>
               
               <div>
@@ -267,26 +297,27 @@
               </div>
               
               <div>
-                <label class="block text-gray-700 mb-2">经济类型</label>
-                <select v-model="caseProfile.economicType" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                  <option value="无收入">无收入</option>
-                  <option value="有退休金">有退休金</option>
-                  <option value="有商业保险">有商业保险</option>
-                  <option value="儿女赡养">儿女赡养</option>
-                </select>
+                <label class="block text-gray-700 mb-2">经济类型（可多选）</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <label v-for="e in economicTypeOptions" :key="e" 
+                         class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                         :class="caseProfile.economicTypes.includes(e) ? 'border-blue-500 bg-blue-50' : ''">
+                    <input type="checkbox" v-model="caseProfile.economicTypes" :value="e" class="mr-2">
+                    {{ e }}
+                  </label>
+                </div>
               </div>
               
               <div>
-                <label class="block text-gray-700 mb-2">爱好</label>
-                <select v-model="caseProfile.hobby" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                  <option value="聊天">聊天</option>
-                  <option value="养花">养花</option>
-                  <option value="看书">看书</option>
-                  <option value="看电视">看电视</option>
-                  <option value="下棋">下棋</option>
-                  <option value="广场舞">广场舞</option>
-                  <option value="唱歌">唱歌</option>
-                </select>
+                <label class="block text-gray-700 mb-2">爱好（可多选）</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <label v-for="h in hobbyOptions" :key="h" 
+                         class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                         :class="caseProfile.hobbies.includes(h) ? 'border-blue-500 bg-blue-50' : ''">
+                    <input type="checkbox" v-model="caseProfile.hobbies" :value="h" class="mr-2">
+                    {{ h }}
+                  </label>
+                </div>
               </div>
               
               <div>
@@ -617,12 +648,16 @@ const caseProfile = reactive({
   personality: '开朗健谈',
   dialect: '普通话',
   livingPlace: '家',
-  livingType: '有老伴',
+  livingTypes: ['有老伴'],
+  economicTypes: ['有退休金'],
+  hobbies: ['看电视'],
   occupation: '退休工人',
-  economicType: '有退休金',
-  hobby: '看电视',
   studentTitle: '大夫'
 })
+
+const livingTypeOptions = ['独居', '丧偶', '有老伴', '无儿女', '儿女在外地']
+const economicTypeOptions = ['无收入', '有退休金', '有商业保险', '儿女赡养']
+const hobbyOptions = ['聊天', '养花', '看书', '看电视', '下棋', '广场舞', '唱歌']
 
 const diseases = [
   '高血压', '糖尿病', '冠心病', '脑卒中',
@@ -970,10 +1005,10 @@ async function generateCase() {
         age: parseInt(caseProfile.age.split('-')[0]) + 5,
         gender: caseProfile.gender,
         occupation: caseProfile.occupation,
-        familyStatus: caseProfile.livingType,
+        familyStatus: caseProfile.livingTypes.join('、') || '有老伴',
         livingPlace: caseProfile.livingPlace,
-        economicType: caseProfile.economicType,
-        hobby: caseProfile.hobby,
+        economicType: caseProfile.economicTypes.join('、') || '有退休金',
+        hobby: caseProfile.hobbies.join('、') || '看电视',
         studentTitle: caseProfile.studentTitle || '大夫'
       },
       medicalHistory: {

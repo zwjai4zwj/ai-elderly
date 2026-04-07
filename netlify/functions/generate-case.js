@@ -29,10 +29,11 @@ export async function handler(event, context) {
 - 性格：${profile.personality}
 - 方言：${profile.dialect}
 - 居住场所：${profile.livingPlace || '家'}
-- 居住类型：${profile.livingType || '有老伴'}
+- 居住类型：${(profile.livingTypes || []).join('、') || '有老伴'}
 - 职业：${profile.occupation || '退休工人'}
-- 经济来源：${profile.economicType || '有退休金'}
-- 爱好：${profile.hobby || '看电视'}
+- 经济来源：${(profile.economicTypes || []).join('、') || '有退休金'}
+- 爱好：${(profile.hobbies || []).join('、') || '看电视'}
+- 称呼学生：${profile.studentTitle || '大夫'}
 
 请生成完整的病例信息，返回JSON格式：
 {
