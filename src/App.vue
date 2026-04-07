@@ -1146,7 +1146,10 @@ const dialectTips = {
   '澳门话': '用澳门口音回复'
 }
 
-// 发送消息（纯前端智能回复）
+// Supabase Edge Function URL
+const EDGE_FUNCTION_URL = 'https://todnsmeovkpmniqcwucm.supabase.co/functions/v1/chat'
+
+// 发送消息
 async function sendMessage() {
   if (!userInput.value.trim() || isTyping.value) return
   
@@ -1161,23 +1164,88 @@ async function sendMessage() {
     const age = caseInfo.basicInfo?.age || 75
     const gender = caseInfo.basicInfo?.gender || '男'
     const disease = caseInfo.medicalHistory?.pastHistory || '高血压'
+    const livingPlace = caseInfo.basicInfo?.livingPlace || caseProfile.livingPlace || '家里'
+    const livingType = (caseInfo.basicInfo?.familyStatus || caseProfile.livingTypes || ['独居']).join('、')
+    const occupation = caseInfo.basicInfo?.occupation || caseProfile.occupation || '普通工人'
+    const hobbies = (caseInfo.basicInfo?.hobby || caseProfile.hobbies || ['看电视']).join('、')
     const studentTitle = caseInfo.basicInfo?.studentTitle || caseProfile.studentTitle || '大夫'
     const dialect = caseProfile.dialect || '普通话'
+    const dialectTip = dialectTips[dialect] || '用普通话'
     
-    // 智能回复
-    const reply = generateSmartReply(userMsg, { name, age, gender, disease, studentTitle, dialect })
+    const systemPrompt = `你是${name}，一位${age}岁${gender}老人。
+
+【你的情况】
+- 患有${disease}
+- 住${livingPlace}，${livingType}
+- 以前是${occupation}
+- 平时爱${hobbies}
+
+【对话规则】
+你现在是真实的老人，学生问什么就答什么！
+- 问"你好/您好" → 热情回应，如"哎哟，大夫来了啊，快坐快坐"
+- 问血压 → 直接说具体数值，如"今早量了，145/90"
+- 问吃药 → 说吃了没，偶尔会忘
+- 问身体 → 说哪里不舒服
+- 问心情 → 说心里话，想孩子、担心病
+- 问睡眠 → 说睡眠问题
+- 问饮食 → 说吃饭情况
+
+【说话风格】
+${dialectTip}
+称呼学生为"${studentTitle}"
+像跟邻居唠嗑一样自然，可以啰嗦，可以带情绪（担心、高兴、抱怨、想念）
+
+【绝对禁止】
+× 不要说"好的我记住了"
+× 不要说"我不清楚你给我讲讲"
+× 不要用书面语
+× 每次回复必须不一样`
+
+    const chatMessages = [
+      { role: 'system', content: systemPrompt },
+      ...messages.value.map(m => ({
+        role: m.role === 'assistant' ? 'assistant' : 'user',
+        content: m.content
+      }))
+    ]
     
-    // 模拟打字延迟
-    await new Promise(r => setTimeout(r, 500 + Math.random() * 500))
+    // 调用Supabase Edge Function
+    const response = await fetch(EDGE_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: chatMessages })
+    })
     
-    messages.value.push({ role: 'assistant', content: reply })
-    speak(reply)
+    if (response.ok) {
+      const data = await response.json()
+      if (data.choices && data.choices[0]) {
+        const reply = data.choices[0].message.content
+        messages.value.push({ role: 'assistant', content: reply })
+        speak(reply)
+      } else {
+        // API返回格式错误，使用前端智能回复
+        useFallbackReply(userMsg, { name, disease, studentTitle, dialect })
+      }
+    } else {
+      // API调用失败，使用前端智能回复
+      useFallbackReply(userMsg, { name, disease, studentTitle, dialect })
+    }
     
   } catch (error) {
     console.error('Chat error:', error)
+    const name = generatedCase.value.basicInfo?.name || '老人'
+    const studentTitle = caseProfile.studentTitle || '大夫'
+    useFallbackReply(userMsg, { name, disease: '老毛病', studentTitle, dialect: '普通话' })
   } finally {
     isTyping.value = false
   }
+}
+
+// 前端智能回复（降级方案）
+function useFallbackReply(userMsg, elder) {
+  const reply = generateSmartReply(userMsg, elder)
+  messages.value.push({ role: 'assistant', content: reply })
+  speak(reply)
 }
 
 // 智能回复生成函数
