@@ -977,11 +977,15 @@ async function sendMessage() {
   }
 }
 
-// 讯飞语音配置
-const XUNFEI_CONFIG = {
-  appId: 'ce9119c9',
-  apiKey: '502bc91c27f537d1048d3763204e0a17',
-  apiSecret: 'NDk5NjA4MTY3MDgyNzE5MGUwZjk0NTE3'
+// 讯飞语音配置（多个应用轮换使用）
+const XUNFEI_CONFIGS = [
+  { appId: 'ce9119c9', apiKey: '502bc91c27f537d1048d3763204e0a17', apiSecret: 'NDk5NjA4MTY3MDgyNzE5MGUwZjk0NTE3' },
+  { appId: '0e882cfc', apiKey: '5ed75eebcc376af7d1300b3beaa36460', apiSecret: 'MGUzZTg1MzhhMTBkZjYwODFlOGZjZjFh' }
+]
+
+// 随机选择一个配置
+function getXunfeiConfig() {
+  return XUNFEI_CONFIGS[Math.floor(Math.random() * XUNFEI_CONFIGS.length)]
 }
 
 // 语音播放功能（讯飞语音合成）
@@ -999,6 +1003,9 @@ function speak(text) {
 async function speakWithXunfei(text, gender) {
   return new Promise(async (resolve, reject) => {
     try {
+      // 随机选择一个应用配置
+      const config = getXunfeiConfig()
+      
       // 生成鉴权URL
       const host = 'tts-api.xfyun.cn'
       const path = '/v2/tts'
@@ -1006,8 +1013,8 @@ async function speakWithXunfei(text, gender) {
       
       // 签名
       const signatureOrigin = `host: ${host}\ndate: ${date}\nGET ${path} HTTP/1.1`
-      const signature = await hmacSha256(signatureOrigin, XUNFEI_CONFIG.apiSecret)
-      const authorizationOrigin = `api_key="${XUNFEI_CONFIG.apiKey}", algorithm="hmac-sha256", headers="host date request-line", signature="${signature}"`
+      const signature = await hmacSha256(signatureOrigin, config.apiSecret)
+      const authorizationOrigin = `api_key="${config.apiKey}", algorithm="hmac-sha256", headers="host date request-line", signature="${signature}"`
       const authorization = btoa(authorizationOrigin)
       
       const wsUrl = `wss://${host}${path}?authorization=${authorization}&date=${encodeURIComponent(date)}&host=${host}`
@@ -1022,7 +1029,7 @@ async function speakWithXunfei(text, gender) {
       ws.onopen = () => {
         const request = {
           header: {
-            app_id: XUNFEI_CONFIG.appId,
+            app_id: config.appId,
             status: 2
           },
           parameter: {
