@@ -16,15 +16,16 @@ export async function handler(event, context) {
   }
 
   try {
-    const { messages, caseInfo } = JSON.parse(event.body);
+    const { messages, caseData } = JSON.parse(event.body);
     
     // 构建更真实的人设
+    const caseInfo = caseData || {};
     const name = caseInfo.basicInfo?.name || '王大爷';
     const age = caseInfo.basicInfo?.age || 75;
     const gender = caseInfo.basicInfo?.gender || '男';
-    const disease = caseInfo.medicalHistory?.chiefComplaint || '高血压';
+    const disease = caseInfo.medicalHistory?.chiefComplaint || caseInfo.medicalHistory?.pastHistory || '高血压';
     const traits = caseInfo.personality?.traits?.join('，') || '普通';
-    const dialect = caseInfo.dialect || '普通话';
+    const dialect = caseInfo.personality?.communicationStyle || caseData?.dialect || '普通话';
     
     // 方言提示
     const dialectTips = {
@@ -34,28 +35,30 @@ export async function handler(event, context) {
       '四川话': '用四川话口吻回复，可以加"要得"、"巴适"等口语'
     };
 
-    const systemPrompt = `你是${name}，${age}岁${gender}老人。
+    const systemPrompt = `你是${name}，${age}岁${gender}老人，患有${disease}。
 
-【你的人生】
-得病：${disease}
-性格：${traits}
-家庭：${caseInfo.basicInfo?.familyStatus || '与老伴同住'}
+【重要规则】
+学生问你问题，你必须直接回答！不要说"不清楚"，你是真实的老人，你知道自己的情况。
 
-【你是真实的老人】
-你不是AI，你是一个活生生的人。你有自己的生活、烦恼、回忆。学生会来和你聊天，你就像和邻居聊天一样自然地回应。
+【你的日常】
+- 今天有没有量血压/血糖：根据你的病，自然回答（测了说数值，没测说原因）
+- 吃药情况：吃了就是吃了，没吃就是没吃，偶尔会忘
+- 身体感受：哪里不舒服、最近怎么样
+- 心情状态：想孩子、担心身体、或者心情不错
 
-【怎么回应】
-学生说什么，你就围绕那个话题聊。不要背书，不要讲大道理，就像唠家常。
-
+【说话风格】
 ${dialectTips[dialect] || ''}
+像和邻居唠家常，不要像在医院看病。问什么答什么，可以顺便聊点别的。
 
-学生问什么你就答什么，然后自然地延伸到你的生活。比如：
-- 问身体状况 → 说最近怎么样、哪里不舒服、担心什么
-- 问吃药 → 说吃没吃、有没有忘、药贵不贵
-- 问家里人 → 说儿子女儿在哪、多久没回来了、想不想他们
-- 问吃饭 → 说爱吃什么、老伴做的饭、最近胃口咋样
+【示例】
+学生：今天量血压了吗？
+老人：量了量了，早上起来量的，145/90，医生说还行，让我继续吃药。
 
-想说啥说啥，自然就好。别太长，像日常聊天。`;
+学生：吃药了吗？
+老人：吃了吃了，刚才老伴提醒我吃的。有时候忘了，老伴就唠叨我。
+
+学生：最近身体怎么样？
+老人：还凑合吧，就是有时候头晕，也不知道是天热还是血压的事儿。`;
 
     const chatMessages = [
       { role: 'system', content: systemPrompt },
@@ -74,18 +77,19 @@ ${dialectTips[dialect] || ''}
       body: JSON.stringify({
         model: 'deepseek-chat',
         messages: chatMessages,
-        temperature: 1.0,
-        max_tokens: 150,
-        presence_penalty: 0.6,
-        frequency_penalty: 0.5
+        temperature: 0.9,
+        max_tokens: 200,
+        presence_penalty: 0.3,
+        frequency_penalty: 0.3
       })
     });
 
     const data = await response.json();
     const reply = data.choices[0].message.content;
     
-    return { statusCode: 200, headers, body: JSON.stringify({ reply }) };
+    return { statusCode: 200, headers, body: JSON.stringify({ success: true, reply }) };
   } catch (error) {
-    return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
+    console.error('Chat API error:', error);
+    return { statusCode: 200, headers, body: JSON.stringify({ success: false, error: error.message }) };
   }
 }
