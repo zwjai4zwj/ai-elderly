@@ -235,6 +235,60 @@
                 </select>
               </div>
               
+              <div>
+                <label class="block text-gray-700 mb-2">居住场所</label>
+                <select v-model="caseProfile.livingPlace" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <option value="家">家</option>
+                  <option value="医院">医院</option>
+                  <option value="社区">社区</option>
+                  <option value="不知道">不知道</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-gray-700 mb-2">居住类型</label>
+                <select v-model="caseProfile.livingType" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <option value="独居">独居</option>
+                  <option value="丧偶">丧偶</option>
+                  <option value="有老伴">有老伴</option>
+                  <option value="无儿女">无儿女</option>
+                  <option value="儿女在外地">儿女在外地</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-gray-700 mb-2">职业类型</label>
+                <select v-model="caseProfile.occupation" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <option value="退休教师">退休教师</option>
+                  <option value="退休工人">退休工人</option>
+                  <option value="退休公务员">退休公务员</option>
+                  <option value="退休农民">退休农民</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-gray-700 mb-2">经济类型</label>
+                <select v-model="caseProfile.economicType" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <option value="无收入">无收入</option>
+                  <option value="有退休金">有退休金</option>
+                  <option value="有商业保险">有商业保险</option>
+                  <option value="儿女赡养">儿女赡养</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-gray-700 mb-2">爱好</label>
+                <select v-model="caseProfile.hobby" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <option value="聊天">聊天</option>
+                  <option value="养花">养花</option>
+                  <option value="看书">看书</option>
+                  <option value="看电视">看电视</option>
+                  <option value="下棋">下棋</option>
+                  <option value="广场舞">广场舞</option>
+                  <option value="唱歌">唱歌</option>
+                </select>
+              </div>
+              
               <button 
                 @click="generateCase" 
                 :disabled="isGenerating || (caseProfile.diseases.length === 0 && caseProfile.customDiseases.length === 0)"
@@ -552,7 +606,12 @@ const caseProfile = reactive({
   diseases: ['高血压'],
   customDiseases: [],
   personality: '开朗健谈',
-  dialect: '普通话'
+  dialect: '普通话',
+  livingPlace: '家',
+  livingType: '有老伴',
+  occupation: '退休工人',
+  economicType: '有退休金',
+  hobby: '看电视'
 })
 
 const diseases = [
@@ -900,8 +959,11 @@ async function generateCase() {
         name: caseProfile.gender === '男' ? '王大爷' : '李大妈',
         age: parseInt(caseProfile.age.split('-')[0]) + 5,
         gender: caseProfile.gender,
-        occupation: '退休工人',
-        familyStatus: '与老伴同住'
+        occupation: caseProfile.occupation,
+        familyStatus: caseProfile.livingType,
+        livingPlace: caseProfile.livingPlace,
+        economicType: caseProfile.economicType,
+        hobby: caseProfile.hobby
       },
       medicalHistory: {
         chiefComplaint: '头晕、乏力1周',
