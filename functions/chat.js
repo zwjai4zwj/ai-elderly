@@ -1,8 +1,8 @@
-// Cloudflare Workers API代理
+// Cloudflare Pages Function - Chat API
 export async function onRequest(context) {
   const { request } = context;
   
-  // 处理CORS预检请求
+  // CORS
   if (request.method === 'OPTIONS') {
     return new Response(null, {
       headers: {
@@ -16,7 +16,7 @@ export async function onRequest(context) {
   if (request.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
     });
   }
   
@@ -27,7 +27,7 @@ export async function onRequest(context) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer sk-e9b60b74c62543d98f6d279a5fe589fe`
+        'Authorization': 'Bearer sk-e9b60b74c62543d98f6d279a5fe589fe'
       },
       body: JSON.stringify({
         model: 'deepseek-chat',
@@ -55,4 +55,3 @@ export async function onRequest(context) {
     });
   }
 }
-// v1.0.1
