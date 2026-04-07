@@ -977,46 +977,177 @@ async function sendMessage() {
   }
 }
 
-// 语音播放功能
+// 讯飞语音配置
+const XUNFEI_CONFIG = {
+  appId: 'ce9119c9',
+  apiKey: '502bc91c27f537d1048d3763204e0a17',
+  apiSecret: 'NDk5NjA4MTY3MDgyNzE5MGUwZjk0NTE3'
+}
+
+// 语音播放功能（讯飞语音合成）
 function speak(text) {
+  const gender = generatedCase.value.basicInfo?.gender || '男'
+  
+  // 先尝试讯飞语音，失败则降级到浏览器语音
+  speakWithXunfei(text, gender).catch((err) => {
+    console.log('讯飞语音失败，使用浏览器语音:', err)
+    speakWithBrowser(text, gender)
+  })
+}
+
+// 讯飞语音合成
+async function speakWithXunfei(text, gender) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // 生成鉴权URL
+      const host = 'tts-api.xfyun.cn'
+      const path = '/v2/tts'
+      const date = new Date().toUTCString()
+      
+      // 签名
+      const signatureOrigin = `host: ${host}\ndate: ${date}\nGET ${path} HTTP/1.1`
+      const signature = await hmacSha256(signatureOrigin, XUNFEI_CONFIG.apiSecret)
+      const authorizationOrigin = `api_key="${XUNFEI_CONFIG.apiKey}", algorithm="hmac-sha256", headers="host date request-line", signature="${signature}"`
+      const authorization = btoa(authorizationOrigin)
+      
+      const wsUrl = `wss://${host}${path}?authorization=${authorization}&date=${encodeURIComponent(date)}&host=${host}`
+      
+      // 选择发音人（讯飞在线语音合成发音人）
+      const voiceName = gender === '女' ? 'xiaoyan' : 'xiaofeng'
+      
+      // 建立WebSocket连接
+      const ws = new WebSocket(wsUrl)
+      let audioChunks = []
+      
+      ws.onopen = () => {
+        const request = {
+          header: {
+            app_id: XUNFEI_CONFIG.appId,
+            status: 2
+          },
+          parameter: {
+            tts: {
+              vcn: voiceName,
+              speed: 40,
+              volume: 50,
+              pitch: 50,
+              audio: {
+                encoding: 'lame',
+                sample_rate: 16000
+              }
+            }
+          },
+          payload: {
+            text: {
+              encoding: 'utf8',
+              text: btoa(unescape(encodeURIComponent(text))),
+              status: 2
+            }
+          }
+        }
+        ws.send(JSON.stringify(request))
+      }
+      
+      ws.onmessage = (event) => {
+        try {
+          const response = JSON.parse(event.data)
+          
+          if (response.header.code !== 0) {
+            ws.close()
+            reject(new Error(response.header.message))
+            return
+          }
+          
+          if (response.payload?.audio?.audio) {
+            audioChunks.push(response.payload.audio.audio)
+          }
+          
+          if (response.header.status === 2) {
+            ws.close()
+            playAudioFromBase64(audioChunks.join(''))
+            resolve()
+          }
+        } catch (e) {
+          ws.close()
+          reject(e)
+        }
+      }
+      
+      ws.onerror = (error) => {
+        reject(error)
+      }
+      
+      setTimeout(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.close()
+        }
+        reject(new Error('timeout'))
+      }, 30000)
+      
+    } catch (error) {
+      reject(error)
+    }
+  })
+}
+
+// HMAC-SHA256
+async function hmacSha256(message, secret) {
+  const encoder = new TextEncoder()
+  const keyData = encoder.encode(secret)
+  const messageData = encoder.encode(message)
+  
+  const key = await crypto.subtle.importKey(
+    'raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  )
+  
+  const signature = await crypto.subtle.sign('HMAC', key, messageData)
+  return btoa(String.fromCharCode(...new Uint8Array(signature)))
+}
+
+// 播放Base64音频
+function playAudioFromBase64(base64Audio) {
+  const binaryString = atob(base64Audio)
+  const bytes = new Uint8Array(binaryString.length)
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i)
+  }
+  
+  const blob = new Blob([bytes], { type: 'audio/mp3' })
+  const url = URL.createObjectURL(blob)
+  const audio = new Audio(url)
+  audio.play()
+}
+
+// 浏览器语音合成（降级方案）
+function speakWithBrowser(text, gender) {
   if (!('speechSynthesis' in window)) return
   
-  // 停止之前的语音
   window.speechSynthesis.cancel()
-  
-  // 确保语音列表已加载
   let voices = window.speechSynthesis.getVoices()
   
   const utterance = new SpeechSynthesisUtterance(text)
   utterance.lang = 'zh-CN'
+  utterance.rate = 0.7
+  utterance.pitch = 0.8
+  utterance.volume = 1.0
   
-  // 老人说话特点：慢、顿、音调低
-  utterance.rate = 0.7      // 更慢的语速
-  utterance.pitch = 0.8     // 更低的音调
-  utterance.volume = 1.0    // 音量正常
-  
-  // 根据性别选择语音
-  const gender = generatedCase.value.basicInfo?.gender || '男'
   const zhVoices = voices.filter(v => v.lang.includes('zh'))
   
   if (zhVoices.length > 0) {
     let selectedVoice = null
     
     if (gender === '女') {
-      // 女声关键词：优先匹配这些
-      const femaleKeywords = ['female', 'woman', 'girl', '女', '妈', '姐', 'Ting-Ting', 'Yaoyao', 'Yaoyao', 'Xiaoxiao', 'Huihui']
+      const femaleKeywords = ['female', 'woman', 'girl', '女', '妈', '姐', 'Ting-Ting', 'Yaoyao', 'Xiaoxiao', 'Huihui']
       selectedVoice = zhVoices.find(v => 
         femaleKeywords.some(k => v.name.toLowerCase().includes(k.toLowerCase()))
       )
     } else {
-      // 男声关键词
       const maleKeywords = ['male', 'man', 'boy', '男', '爸', '爷', 'Grandpa', 'Daddy', 'Kangkang', 'Zhichao']
       selectedVoice = zhVoices.find(v => 
         maleKeywords.some(k => v.name.toLowerCase().includes(k.toLowerCase()))
       )
     }
     
-    // 如果没匹配到，用第一个中文语音
     if (!selectedVoice && zhVoices.length > 0) {
       selectedVoice = zhVoices[0]
     }
@@ -1026,7 +1157,6 @@ function speak(text) {
     }
   }
   
-  // 播放
   window.speechSynthesis.speak(utterance)
 }
 
