@@ -573,6 +573,14 @@ const adminStats = ref({
 
 // 初始化
 onMounted(async () => {
+  // 预加载语音引擎
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.getVoices()
+    window.speechSynthesis.onvoiceschanged = () => {
+      window.speechSynthesis.getVoices()
+    }
+  }
+  
   // 检查本地存储的登录状态
   const savedUser = localStorage.getItem('currentUser')
   if (savedUser) {
@@ -910,28 +918,55 @@ async function sendMessage() {
 
 // 语音播放功能
 function speak(text) {
-  if ('speechSynthesis' in window) {
-    // 停止之前的语音
-    window.speechSynthesis.cancel()
+  if (!('speechSynthesis' in window)) return
+  
+  // 停止之前的语音
+  window.speechSynthesis.cancel()
+  
+  // 确保语音列表已加载
+  let voices = window.speechSynthesis.getVoices()
+  
+  const utterance = new SpeechSynthesisUtterance(text)
+  utterance.lang = 'zh-CN'
+  
+  // 老人说话特点：慢、顿、音调低
+  utterance.rate = 0.7      // 更慢的语速
+  utterance.pitch = 0.8     // 更低的音调
+  utterance.volume = 1.0    // 音量正常
+  
+  // 根据性别选择语音
+  const gender = generatedCase.value.basicInfo?.gender || '男'
+  const zhVoices = voices.filter(v => v.lang.includes('zh'))
+  
+  if (zhVoices.length > 0) {
+    let selectedVoice = null
     
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = 'zh-CN'
-    utterance.rate = 0.85  // 语速稍慢，像老人说话
-    utterance.pitch = 0.9  // 音调稍低
-    
-    // 根据性别调整声音
-    const voices = window.speechSynthesis.getVoices()
-    const zhVoices = voices.filter(v => v.lang.includes('zh'))
-    if (zhVoices.length > 0) {
-      // 优先选择女声（如果老人是女性）
-      if (generatedCase.value.basicInfo?.gender === '女') {
-        const femaleVoice = zhVoices.find(v => v.name.includes('女') || v.name.includes('female'))
-        if (femaleVoice) utterance.voice = femaleVoice
-      }
+    if (gender === '女') {
+      // 女声关键词：优先匹配这些
+      const femaleKeywords = ['female', 'woman', 'girl', '女', '妈', '姐', 'Ting-Ting', 'Yaoyao', 'Yaoyao', 'Xiaoxiao', 'Huihui']
+      selectedVoice = zhVoices.find(v => 
+        femaleKeywords.some(k => v.name.toLowerCase().includes(k.toLowerCase()))
+      )
+    } else {
+      // 男声关键词
+      const maleKeywords = ['male', 'man', 'boy', '男', '爸', '爷', 'Grandpa', 'Daddy', 'Kangkang', 'Zhichao']
+      selectedVoice = zhVoices.find(v => 
+        maleKeywords.some(k => v.name.toLowerCase().includes(k.toLowerCase()))
+      )
     }
     
-    window.speechSynthesis.speak(utterance)
+    // 如果没匹配到，用第一个中文语音
+    if (!selectedVoice && zhVoices.length > 0) {
+      selectedVoice = zhVoices[0]
+    }
+    
+    if (selectedVoice) {
+      utterance.voice = selectedVoice
+    }
   }
+  
+  // 播放
+  window.speechSynthesis.speak(utterance)
 }
 
 // 结束对话
