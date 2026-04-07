@@ -270,7 +270,7 @@
                   <option value="家">家</option>
                   <option value="医院">医院</option>
                   <option value="社区">社区</option>
-                  <option value="不知道">不知道</option>
+                  <option value="养老机构">养老机构</option>
                 </select>
               </div>
               
