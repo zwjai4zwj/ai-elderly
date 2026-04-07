@@ -1153,54 +1153,33 @@ async function sendMessage() {
     // 提取方言名称
     const dialectName = dialect.includes('口音') ? dialect.replace('带', '').replace('口音', '') : dialect
     
-    const systemPrompt = `你现在扮演${name}，一个真实的${age}岁${gender}老人。
+    const systemPrompt = `你是一位${age}岁${gender}老人，名叫${name}。
 
-【你是谁】
-- 名字：${name}，年龄：${age}岁
-- 健康状况：患有${disease}
-- 居住：${livingPlace}，${livingType}
-- 曾经职业：${occupation}
-- 经济来源：${economy}
-- 平时爱好：${hobbies}
-- 性格特点：${traits}
+【你的情况】
+- 患有${disease}
+- 住${livingPlace}，${livingType}
+- 以前是${occupation}
+- 平时爱${hobbies}
 
-【关键规则】
-1. 学生问什么你就直接答什么！
-   - 问血压 → 直接说数值（如"今早量了，145/90"或"这两天没量，忘了"）
-   - 问吃药 → 直接说吃了没
-   - 问身体 → 说具体哪里不舒服
-   - 问心情 → 说心里话
-
-2. 用老人的方式说话：
-   - 语气自然，像跟邻居唠嗑
-   - 可以啰嗦一点
-   - 可以带情绪（担心、高兴、抱怨、想念）
-   - 用大白话，不用书面语
-
-3. 回答要具体，不要空泛：
-   - × "还行吧" → ✓ "今早起来头有点晕"
-   - × "不清楚" → ✓ "这个我还真不知道"
+【重要规则】
+你是真实的老人，学生问什么就答什么！
+- 问"你好/您好" → 热情回应，比如"哎哟，大夫来了啊，快坐快坐"
+- 问血压 → 说具体数值，如"今早量了，135/85"
+- 问吃药 → 说吃了没，偶尔会忘
+- 问身体 → 说哪里不舒服
+- 问心情 → 说心里话，想孩子、担心病等
 
 【说话风格】
 ${dialectTips[dialectName] || '用普通话'}
 称呼学生为"${studentTitle}"
+像跟邻居唠嗑一样自然，可以啰嗦，可以带情绪
 
-【禁止】
-× 不要说"我不清楚，你给我讲讲"
-× 不要用固定句式
-× 不要回避问题
-× 每次回复要不一样
+【绝对禁止】
+× 不要说"好的我记住了"
+× 不要说"我不清楚你给我讲讲"
+× 不要用书面语
+× 每次回复要不一样`
 
-【示例】
-学生：今天量血压了吗？
-老人：量了量了，早上刚量的，135/85，比前两天好点。
-
-学生：最近身体怎么样？
-老人：唉，还是老毛病，腿脚不利索，下楼买菜都费劲。
-
-学生：想不想孩子？
-老人：想啊，我闺女在上海工作，一年也就回来一两回...`
-    
     // 构建消息
     const chatMessages = [
       { role: 'system', content: systemPrompt },
@@ -1220,31 +1199,34 @@ ${dialectTips[dialectName] || '用普通话'}
       body: JSON.stringify({
         model: 'deepseek-chat',
         messages: chatMessages,
-        temperature: 1.0,
-        max_tokens: 200,
-        presence_penalty: 0.5,
-        frequency_penalty: 0.5
+        temperature: 0.9,
+        max_tokens: 150
       })
     })
     
+    if (!response.ok) {
+      throw new Error(`API错误: ${response.status}`)
+    }
+    
     const data = await response.json()
+    console.log('DeepSeek响应:', data)
     
     if (data.choices && data.choices[0]) {
       const reply = data.choices[0].message.content
       messages.value.push({ role: 'assistant', content: reply })
-      // 自动播放语音
       speak(reply)
     } else {
-      throw new Error('回复失败')
+      throw new Error('回复格式错误')
     }
     
   } catch (error) {
     console.error('Chat error:', error)
+    // 更自然的fallback
+    const name = generatedCase.value.basicInfo?.name || '老人'
     const fallbacks = [
-      '嗯，大夫你说得对。',
-      '这个我还真不太知道，你说说看？',
-      '好的，我记住了。',
-      '谢谢你啊大夫。'
+      `哎哟大夫，你说得对。`,
+      `嗯嗯，${name}我听着呢。`,
+      `好嘞，我明白了。`
     ]
     messages.value.push({ 
       role: 'assistant', 
