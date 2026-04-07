@@ -1525,7 +1525,6 @@ async function speakWithXunfei(text, gender) {
     }
   })
 }
-}
 
 // HMAC-SHA256
 async function hmacSha256(message, secret) {
