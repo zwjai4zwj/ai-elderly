@@ -1016,7 +1016,7 @@ async function generateCase() {
   "openingLine": "老人的开场白（要自然，符合老人身份和疾病情况）"
 }`
 
-    const response = await fetch('/api/generate-case', {
+    const response = await fetch('/generate-case', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -1185,7 +1185,7 @@ ${dialectTips[dialectName] || '用普通话'}
     console.log('发送消息到API:', chatMessages)
     
     // 调用API
-    const response = await fetch('/api/chat', {
+    const response = await fetch('/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -1468,7 +1468,7 @@ ${chatHistory}
   "improvements": ["改进建议1", "改进建议2"]
 }`
 
-    const response = await fetch('/api/score', {
+    const response = await fetch('/score', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
