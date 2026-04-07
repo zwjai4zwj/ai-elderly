@@ -478,17 +478,23 @@
               <h3 class="font-bold mb-3">评语</h3>
               <p class="text-gray-600">{{ score.feedback }}</p>
               
-              <div class="mt-4 grid grid-cols-2 gap-4">
+              <div class="mt-4 space-y-4">
                 <div>
-                  <p class="text-sm text-gray-500 mb-2">优点</p>
+                  <p class="text-sm text-gray-500 mb-2">✅ 优点</p>
                   <ul class="text-sm space-y-1">
-                    <li v-for="s in score.strengths" :key="s" class="text-green-600">✓ {{ s }}</li>
+                    <li v-for="s in score.strengths" :key="s" class="text-green-600">• {{ s }}</li>
                   </ul>
                 </div>
                 <div>
-                  <p class="text-sm text-gray-500 mb-2">待改进</p>
+                  <p class="text-sm text-gray-500 mb-2">❌ 不足</p>
                   <ul class="text-sm space-y-1">
-                    <li v-for="i in score.improvements" :key="i" class="text-orange-600">→ {{ i }}</li>
+                    <li v-for="w in score.weaknesses" :key="w" class="text-red-600">• {{ w }}</li>
+                  </ul>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500 mb-2">💡 建议</p>
+                  <ul class="text-sm space-y-1">
+                    <li v-for="i in score.improvements" :key="i" class="text-blue-600">• {{ i }}</li>
                   </ul>
                 </div>
               </div>
@@ -703,6 +709,7 @@ const score = ref({
   dimensions: {},
   feedback: '',
   strengths: [],
+  weaknesses: [],
   improvements: []
 })
 
@@ -1625,7 +1632,7 @@ async function endChat() {
       `${m.role === 'user' ? '学生' : name}: ${m.content}`
     ).join('\n')
 
-    const prompt = `请对以下学生与老人的对话进行评分，以JSON格式返回。
+    const prompt = `请对以下学生与老人的对话进行专业评分，以JSON格式返回。
 
 老人信息：
 - 姓名：${name}
@@ -1635,32 +1642,40 @@ async function endChat() {
 ${chatHistory}
 
 评分维度（每项满分25分）：
-1. 思政素养：体现人文关怀、尊重老人、职业道德
-2. 沟通技巧：语言表达、倾听能力、共情能力
-3. 健康宣教：疾病知识讲解、用药指导、健康建议
-4. 专业能力：评估准确、问题处理、专业知识运用
+1. 思政维度：是否体现关爱老人、尊重老人价值观，态度是否友善、是否体现职业道德
+2. 心理慰藉：是否给予情感支持、缓解焦虑，是否倾听、是否安慰、是否理解老人情绪
+3. 健康宣教：健康知识传达是否准确、易懂，用药指导、疾病知识、生活习惯建议
+4. 康复训练：是否指导合理的康复方法，康复动作指导、日常锻炼建议、注意事项
+
+评分要求：
+- 严格根据对话内容评分，不要随意给高分
+- 如果某维度完全没有涉及，该维度得0分
+- 优点和不足要具体，结合对话内容
+- 建议要实用，针对不足提出
 
 请返回如下JSON格式（不要有其他内容）：
 {
   "totalScore": 总分(0-100),
   "dimensions": {
-    "思政素养": 分数(0-25),
-    "沟通技巧": 分数(0-25),
+    "思政维度": 分数(0-25),
+    "心理慰藉": 分数(0-25),
     "健康宣教": 分数(0-25),
-    "专业能力": 分数(0-25)
+    "康复训练": 分数(0-25)
   },
   "feedback": "整体评价（50字以内）",
-  "strengths": ["优点1", "优点2", "优点3"],
-  "improvements": ["改进建议1", "改进建议2"]
+  "strengths": ["具体优点1", "具体优点2"],
+  "weaknesses": ["具体不足1", "具体不足2"],
+  "improvements": ["具体建议1", "具体建议2"]
 }`
 
-    const response = await fetch('/score', {
+    const response = await fetch(EDGE_FUNCTION_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        prompt: prompt
+        messages: [{ role: 'user', content: prompt }],
+        mode: 'score'
       })
     })
     
@@ -1680,16 +1695,17 @@ ${chatHistory}
     // 默认评分
     const studentMsgs = messages.value.filter(m => m.role === 'user')
     score.value = {
-      totalScore: Math.min(70 + studentMsgs.length * 3, 95),
+      totalScore: Math.min(60 + studentMsgs.length * 2, 85),
       dimensions: {
-        '思政素养': 18 + Math.floor(Math.random() * 5),
-        '沟通技巧': 17 + Math.floor(Math.random() * 5),
-        '健康宣教': 18 + Math.floor(Math.random() * 5),
-        '专业能力': 17 + Math.floor(Math.random() * 5)
+        '思政维度': 15 + Math.floor(Math.random() * 5),
+        '心理慰藉': 14 + Math.floor(Math.random() * 5),
+        '健康宣教': 15 + Math.floor(Math.random() * 5),
+        '康复训练': 14 + Math.floor(Math.random() * 5)
       },
-      feedback: '整体表现良好，继续保持！',
-      strengths: ['态度友善', '有耐心'],
-      improvements: ['可以更深入了解老人需求']
+      feedback: '整体表现一般，建议加强各维度能力',
+      strengths: ['态度友善', '有耐心沟通'],
+      weaknesses: ['缺少针对性指导', '心理疏导不足'],
+      improvements: ['加强对老人的情感关怀', '提供更专业的健康指导']
     }
   } finally {
     isTyping.value = false
@@ -1707,7 +1723,7 @@ function resetPractice() {
   currentStep.value = 'home'
   messages.value = []
   generatedCase.value = {}
-  score.value = { totalScore: 0, dimensions: {}, feedback: '', strengths: [], improvements: [] }
+  score.value = { totalScore: 0, dimensions: {}, feedback: '', strengths: [], weaknesses: [], improvements: [] }
 }
 
 // 创建班级

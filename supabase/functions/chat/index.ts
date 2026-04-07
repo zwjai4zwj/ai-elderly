@@ -25,7 +25,11 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json()
     
-    console.log("收到请求:", JSON.stringify(body.messages?.slice(-1)))
+    // 判断是评分模式还是对话模式
+    const isScoreMode = body.mode === 'score'
+    const maxTokens = isScoreMode ? 800 : 150
+    
+    console.log("收到请求:", isScoreMode ? "评分模式" : "对话模式")
 
     const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
@@ -36,13 +40,13 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: "deepseek-chat",
         messages: body.messages,
-        temperature: 0.9,
-        max_tokens: 150,
+        temperature: isScoreMode ? 0.3 : 0.9,  // 评分模式更确定
+        max_tokens: maxTokens,
       }),
     })
 
     const data = await response.json()
-    console.log("DeepSeek响应:", JSON.stringify(data.choices?.[0]?.message?.content?.substring(0, 50)))
+    console.log("DeepSeek响应:", isScoreMode ? "评分完成" : JSON.stringify(data.choices?.[0]?.message?.content?.substring(0, 50)))
 
     return new Response(JSON.stringify(data), {
       headers: {
