@@ -186,6 +186,33 @@
                     {{ d }}
                   </label>
                 </div>
+                
+                <!-- 自定义疾病输入 -->
+                <div class="mt-3 p-3 bg-gray-50 rounded-lg">
+                  <p class="text-sm text-gray-600 mb-2">其他疾病（自定义）</p>
+                  <div class="flex gap-2">
+                    <input 
+                      v-model="customDisease" 
+                      @keyup.enter="addCustomDisease"
+                      placeholder="输入疾病名称，回车添加"
+                      class="flex-1 px-3 py-2 border rounded-lg text-sm"
+                    />
+                    <button 
+                      @click="addCustomDisease"
+                      :disabled="!customDisease.trim()"
+                      class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm disabled:bg-gray-300"
+                    >
+                      添加
+                    </button>
+                  </div>
+                  <div v-if="caseProfile.customDiseases.length > 0" class="flex flex-wrap gap-2 mt-2">
+                    <span v-for="d in caseProfile.customDiseases" :key="d" 
+                          class="flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                      {{ d }}
+                      <button @click="removeCustomDisease(d)" class="ml-1 text-blue-500 hover:text-red-500">×</button>
+                    </span>
+                  </div>
+                </div>
               </div>
               
               <div>
@@ -210,7 +237,7 @@
               
               <button 
                 @click="generateCase" 
-                :disabled="isGenerating || caseProfile.diseases.length === 0"
+                :disabled="isGenerating || (caseProfile.diseases.length === 0 && caseProfile.customDiseases.length === 0)"
                 class="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400"
               >
                 <span v-if="isGenerating" class="flex items-center justify-center">
@@ -523,11 +550,20 @@ const caseProfile = reactive({
   age: '70-80',
   gender: '男',
   diseases: ['高血压'],
+  customDiseases: [],
   personality: '开朗健谈',
   dialect: '普通话'
 })
 
-const diseases = ['高血压', '糖尿病', '冠心病', '阿尔茨海默', '帕金森', '关节炎']
+const diseases = [
+  '高血压', '糖尿病', '冠心病', '脑卒中',
+  '阿尔茨海默', '帕金森', '关节炎', '骨质疏松',
+  '慢性支气管炎', '肺气肿', '胃溃疡', '慢性胃炎',
+  '白内障', '青光眼', '前列腺增生', '失眠症',
+  '抑郁症', '焦虑症', '类风湿', '痛风'
+]
+
+const customDisease = ref('')
 
 const generatedCase = ref({})
 const messages = ref([])
@@ -802,10 +838,33 @@ function logout() {
   loginForm.password = ''
 }
 
+// 添加自定义疾病
+function addCustomDisease() {
+  const disease = customDisease.value.trim()
+  if (disease && !caseProfile.customDiseases.includes(disease)) {
+    caseProfile.customDiseases.push(disease)
+    customDisease.value = ''
+  }
+}
+
+// 移除自定义疾病
+function removeCustomDisease(disease) {
+  const index = caseProfile.customDiseases.indexOf(disease)
+  if (index > -1) {
+    caseProfile.customDiseases.splice(index, 1)
+  }
+}
+
+// 获取所有选中的疾病
+function getAllDiseases() {
+  return [...caseProfile.diseases, ...caseProfile.customDiseases]
+}
+
 // 生成病例
 async function generateCase() {
-  if (caseProfile.diseases.length === 0) {
-    alert('请至少选择一种疾病')
+  const allDiseases = getAllDiseases()
+  if (allDiseases.length === 0) {
+    alert('请至少选择或输入一种疾病')
     return
   }
   
@@ -834,7 +893,7 @@ async function generateCase() {
     console.error('Generate case error:', error)
     // 使用默认数据
     generatedCase.value = {
-      caseName: `${caseProfile.diseases[0]}老年患者病例`,
+      caseName: `${allDiseases[0]}老年患者病例`,
       basicInfo: {
         name: caseProfile.gender === '男' ? '王大爷' : '李大妈',
         age: parseInt(caseProfile.age.split('-')[0]) + 5,
@@ -844,8 +903,8 @@ async function generateCase() {
       },
       medicalHistory: {
         chiefComplaint: '头晕、乏力1周',
-        presentIllness: `患者有${caseProfile.diseases.join('、')}病史`,
-        pastHistory: caseProfile.diseases.join('、'),
+        presentIllness: `患者有${allDiseases.join('、')}病史`,
+        pastHistory: allDiseases.join('、'),
         medications: ['降压药']
       },
       personality: {
