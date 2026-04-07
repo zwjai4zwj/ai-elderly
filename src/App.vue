@@ -415,14 +415,46 @@
             
             <!-- 学生列表 -->
             <div class="bg-white rounded-xl p-6 shadow">
-              <h3 class="font-bold mb-4">学生管理</h3>
+              <h3 class="font-bold mb-4">添加学生</h3>
+              <div class="space-y-3">
+                <input 
+                  v-model="newStudent.name" 
+                  placeholder="学生姓名"
+                  class="w-full px-3 py-2 border rounded-lg"
+                />
+                <select v-model="newStudent.classId" class="w-full px-3 py-2 border rounded-lg">
+                  <option value="">选择班级</option>
+                  <option v-for="cls in classes" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
+                </select>
+                <input 
+                  v-model="newStudent.password" 
+                  type="text"
+                  placeholder="登录密码（默认123456）"
+                  class="w-full px-3 py-2 border rounded-lg"
+                />
+                <button 
+                  @click="createStudent"
+                  :disabled="!newStudent.name"
+                  class="w-full py-2 bg-green-600 text-white rounded-lg disabled:bg-gray-400"
+                >
+                  添加学生
+                </button>
+              </div>
+            </div>
+            
+            <!-- 学生列表 -->
+            <div class="bg-white rounded-xl p-6 shadow">
+              <h3 class="font-bold mb-4">学生列表</h3>
               <div v-if="students.length === 0" class="text-gray-400 text-sm">
                 暂无学生
               </div>
               <div v-else class="space-y-2 max-h-60 overflow-y-auto">
                 <div v-for="student in students" :key="student.id" 
                      class="flex justify-between items-center p-2 bg-gray-50 rounded">
-                  <span>{{ student.name }}</span>
+                  <div>
+                    <span class="font-medium">{{ student.name }}</span>
+                    <span class="text-sm text-gray-400 ml-2">{{ student.email }}</span>
+                  </div>
                   <span class="text-sm text-gray-500">{{ student.class_name }}</span>
                 </div>
               </div>
@@ -457,10 +489,10 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { createClient } from '@supabase/supabase-js'
 
-// 初始化 Supabase
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
+// 初始化 Supabase（直接配置，不依赖环境变量）
+const supabaseUrl = 'https://todnsmeovkpmniqcwucm.supabase.co'
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZG5zbWVvdmtwbW5pcWN3dWNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0OTY0NzMsImV4cCI6MjA5MTA3MjQ3M30.7LSP7dtoRDTiGp--7gC9NXvQARd_uPh1_-i0PajluHU'
+const supabase = createClient(supabaseUrl, supabaseKey)
 
 // API 基础路径
 const apiBase = '/.netlify/functions'
@@ -515,6 +547,7 @@ const score = ref({
 const classes = ref([])
 const students = ref([])
 const newClass = reactive({ name: '' })
+const newStudent = reactive({ name: '', classId: '', password: '' })
 
 // 练习历史
 const practiceHistory = ref([])
@@ -626,16 +659,33 @@ async function login() {
     return
   }
   
-  // Supabase 登录
-  if (!supabase) {
-    loginError.value = '账号或密码错误'
-    return
-  }
-  
   isLoggingIn.value = true
   
   try {
-    // 尝试用邮箱登录
+    // 先尝试从 users 表查询（管理员创建的学生账号）
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('*, classes(name)')
+      .eq('email', loginForm.username)
+      .eq('password', loginForm.password)
+      .single()
+    
+    if (userData) {
+      currentUser.value = {
+        id: userData.id,
+        email: userData.email,
+        name: userData.name,
+        role: userData.role || 'student',
+        class_id: userData.class_id,
+        class_name: userData.classes?.name
+      }
+      localStorage.setItem('currentUser', JSON.stringify(currentUser.value))
+      isLoggedIn.value = true
+      loadData()
+      return
+    }
+    
+    // 尝试 Supabase Auth 登录（注册的用户）
     const email = loginForm.username.includes('@') 
       ? loginForm.username 
       : `${loginForm.username}@example.com`
@@ -648,7 +698,7 @@ async function login() {
     if (error) throw error
     
     // 获取用户信息
-    const { data: userData } = await supabase
+    const { data: authUserData } = await supabase
       .from('users')
       .select('*, classes(name)')
       .eq('id', data.user.id)
@@ -657,10 +707,10 @@ async function login() {
     currentUser.value = {
       id: data.user.id,
       email: data.user.email,
-      name: userData?.name || data.user.email,
-      role: userData?.role || 'student',
-      class_id: userData?.class_id,
-      class_name: userData?.classes?.name
+      name: authUserData?.name || data.user.email,
+      role: authUserData?.role || 'student',
+      class_id: authUserData?.class_id,
+      class_name: authUserData?.classes?.name
     }
     
     localStorage.setItem('currentUser', JSON.stringify(currentUser.value))
@@ -944,7 +994,7 @@ function resetPractice() {
 
 // 创建班级
 async function createClass() {
-  if (!newClass.name || !supabase) return
+  if (!newClass.name) return
   
   const { data, error } = await supabase
     .from('classes')
@@ -954,9 +1004,53 @@ async function createClass() {
   if (data) {
     classes.value.push(data[0])
     newClass.name = ''
-    alert('班级创建成功')
+    alert('班级创建成功！')
   } else if (error) {
     alert('创建失败：' + error.message)
+  }
+}
+
+// 创建学生
+async function createStudent() {
+  if (!newStudent.name) {
+    alert('请输入学生姓名')
+    return
+  }
+  
+  const password = newStudent.password || '123456'
+  const email = `${Date.now()}@student.local` // 生成临时邮箱
+  
+  try {
+    // 创建用户记录（简化版，无需Supabase Auth）
+    const studentId = 'student_' + Date.now()
+    const { data, error } = await supabase
+      .from('users')
+      .insert({
+        id: studentId,
+        name: newStudent.name,
+        email: email,
+        role: 'student',
+        class_id: newStudent.classId || null,
+        password: password
+      })
+      .select()
+    
+    if (data) {
+      students.value.unshift({
+        id: studentId,
+        name: newStudent.name,
+        email: email,
+        class_name: classes.value.find(c => c.id === newStudent.classId)?.name || '未分配'
+      })
+      alert(`学生创建成功！\n账号：${email}\n密码：${password}`)
+      newStudent.name = ''
+      newStudent.classId = ''
+      newStudent.password = ''
+    } else if (error) {
+      alert('创建失败：' + error.message)
+    }
+  } catch (err) {
+    alert('创建失败：' + err.message)
   }
 }
 
