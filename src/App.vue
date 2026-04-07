@@ -615,9 +615,6 @@ const supabaseUrl = 'https://todnsmeovkpmniqcwucm.supabase.co'
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZG5zbWVvdmtwbW5pcWN3dWNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0OTY0NzMsImV4cCI6MjA5MTA3MjQ3M30.7LSP7dtoRDTiGp--7gC9NXvQARd_uPh1_-i0PajluHU'
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-// DeepSeek API Key
-const DEEPSEEK_API_KEY = 'sk-e9b60b74c62543d98f6d279a5fe589fe'
-
 // 状态
 const isLoggedIn = ref(false)
 const currentUser = ref({})
@@ -1019,17 +1016,13 @@ async function generateCase() {
   "openingLine": "老人的开场白（要自然，符合老人身份和疾病情况）"
 }`
 
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    const response = await fetch('/generate-case', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.8,
-        max_tokens: 1000
+        prompt: prompt
       })
     })
     
@@ -1189,18 +1182,14 @@ ${dialectTips[dialectName] || '用普通话'}
       }))
     ]
     
-    // 直接调用DeepSeek API
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    // 调用Cloudflare代理API
+    const response = await fetch('/chat', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: chatMessages,
-        temperature: 0.9,
-        max_tokens: 150
+        messages: chatMessages
       })
     })
     
@@ -1209,7 +1198,7 @@ ${dialectTips[dialectName] || '用普通话'}
     }
     
     const data = await response.json()
-    console.log('DeepSeek响应:', data)
+    console.log('AI响应:', data)
     
     if (data.choices && data.choices[0]) {
       const reply = data.choices[0].message.content
@@ -1470,17 +1459,13 @@ ${chatHistory}
   "improvements": ["改进建议1", "改进建议2"]
 }`
 
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    const response = await fetch('/score', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.5,
-        max_tokens: 500
+        prompt: prompt
       })
     })
     
