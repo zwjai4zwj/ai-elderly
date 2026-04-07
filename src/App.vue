@@ -283,9 +283,17 @@
                 <div class="text-xs text-gray-400 mb-1">
                   {{ msg.role === 'user' ? '我' : generatedCase.basicInfo?.name }}
                 </div>
-                <div :class="msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-white text-gray-800'"
-                     class="inline-block max-w-[80%] px-4 py-2 rounded-lg shadow-sm">
-                  {{ msg.content }}
+                <div class="inline-flex items-end gap-2">
+                  <div :class="msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-white text-gray-800'"
+                       class="max-w-[80%] px-4 py-2 rounded-lg shadow-sm">
+                    {{ msg.content }}
+                  </div>
+                  <button v-if="msg.role === 'assistant'" 
+                          @click="speak(msg.content)"
+                          class="text-gray-400 hover:text-blue-500 p-1"
+                          title="点击播放语音">
+                    🔊
+                  </button>
                 </div>
               </div>
               <div v-if="isTyping" class="text-left">
@@ -827,13 +835,14 @@ async function sendMessage() {
     
     if (result.success && result.reply) {
       messages.value.push({ role: 'assistant', content: result.reply })
+      // 自动播放语音
+      speak(result.reply)
     } else {
       throw new Error('回复失败')
     }
     
   } catch (error) {
     console.error('Chat error:', error)
-    // 备用回复
     const fallbacks = [
       '嗯，大夫你说得对。',
       '这个我不太清楚，你给我讲讲？',
@@ -846,6 +855,32 @@ async function sendMessage() {
     })
   } finally {
     isTyping.value = false
+  }
+}
+
+// 语音播放功能
+function speak(text) {
+  if ('speechSynthesis' in window) {
+    // 停止之前的语音
+    window.speechSynthesis.cancel()
+    
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'zh-CN'
+    utterance.rate = 0.85  // 语速稍慢，像老人说话
+    utterance.pitch = 0.9  // 音调稍低
+    
+    // 根据性别调整声音
+    const voices = window.speechSynthesis.getVoices()
+    const zhVoices = voices.filter(v => v.lang.includes('zh'))
+    if (zhVoices.length > 0) {
+      // 优先选择女声（如果老人是女性）
+      if (generatedCase.value.basicInfo?.gender === '女') {
+        const femaleVoice = zhVoices.find(v => v.name.includes('女') || v.name.includes('female'))
+        if (femaleVoice) utterance.voice = femaleVoice
+      }
+    }
+    
+    window.speechSynthesis.speak(utterance)
   }
 }
 
