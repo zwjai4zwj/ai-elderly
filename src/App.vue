@@ -93,7 +93,7 @@
         <div class="flex justify-between items-center max-w-4xl mx-auto">
           <div>
             <h1 class="text-lg font-bold">康养AI实训系统</h1>
-            <p class="text-sm text-blue-200">{{ currentUser.name }} ({{ currentUser.role === 'admin' ? '管理员' : '学生' }})</p>
+            <p class="text-sm text-blue-200">{{ currentUser.name }} ({{ currentUser.role === 'admin' ? '管理员' : currentUser.role === 'teacher' ? '老师' : '学生' }})</p>
           </div>
           <button @click="logout" class="text-sm bg-blue-500 px-3 py-1 rounded hover:bg-blue-400">退出</button>
         </div>
@@ -590,6 +590,202 @@
           </div>
         </div>
         
+        <!-- 老师首页 -->
+        <div v-else-if="currentUser.role === 'teacher'" class="space-y-4">
+          <div class="bg-white rounded-xl p-6 shadow">
+            <h2 class="text-xl font-bold mb-2">教师工作台</h2>
+            <p class="text-gray-500">欢迎，{{ currentUser.name }}</p>
+          </div>
+          
+          <!-- 我负责的班级 -->
+          <div class="bg-white rounded-xl p-6 shadow">
+            <h3 class="font-bold mb-4">我负责的班级</h3>
+            <div v-if="!teacherClasses || teacherClasses.length === 0" class="text-gray-400 text-center py-4">
+              暂未分配班级，请联系管理员分配班级
+            </div>
+            <div v-else class="space-y-3">
+              <div v-for="cls in teacherClasses" :key="cls.id" 
+                   class="border border-blue-200 rounded-lg overflow-hidden">
+                <div class="p-4 bg-blue-50 cursor-pointer hover:bg-blue-100"
+                     @click="selectedTeacherClass = selectedTeacherClass === cls.id ? null : cls.id">
+                  <div class="flex justify-between items-center">
+                    <div>
+                      <p class="font-bold text-blue-800 text-lg">{{ cls.name }}</p>
+                      <p class="text-sm text-gray-500">{{ (classStudentsMap[cls.id] || []).length }} 名学生</p>
+                    </div>
+                    <span class="text-blue-500">{{ selectedTeacherClass === cls.id ? '收起 ▲' : '展开 ▼' }}</span>
+                  </div>
+                </div>
+                
+                <!-- 班级展开后的详细分析 -->
+                <div v-if="selectedTeacherClass === cls.id" class="p-4 bg-white">
+                  <!-- 班级整体统计 -->
+                  <div class="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+                    <h4 class="font-bold text-blue-800 mb-3">📊 班级整体情况</h4>
+                    <div class="grid grid-cols-4 gap-3 text-center">
+                      <div class="bg-white rounded-lg p-2 shadow-sm">
+                        <p class="text-2xl font-bold text-blue-600">{{ getClassStats(cls.id)?.studentCount || 0 }}</p>
+                        <p class="text-xs text-gray-500">学生人数</p>
+                      </div>
+                      <div class="bg-white rounded-lg p-2 shadow-sm">
+                        <p class="text-2xl font-bold text-green-600">{{ getClassStats(cls.id)?.totalPractices || 0 }}</p>
+                        <p class="text-xs text-gray-500">练习总次数</p>
+                      </div>
+                      <div class="bg-white rounded-lg p-2 shadow-sm">
+                        <p class="text-2xl font-bold text-orange-600">{{ getClassStats(cls.id)?.avgScore || '--' }}</p>
+                        <p class="text-xs text-gray-500">班级平均分</p>
+                      </div>
+                      <div class="bg-white rounded-lg p-2 shadow-sm">
+                        <p class="text-2xl font-bold text-purple-600">{{ getClassStats(cls.id)?.highestScore || '--' }}</p>
+                        <p class="text-xs text-gray-500">最高分</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- 四维度分析 -->
+                  <div v-if="getClassStats(cls.id)?.dimensionStats" class="mb-4 p-4 bg-gray-50 rounded-lg">
+                    <h4 class="font-bold text-gray-700 mb-3">📈 四维度能力分析</h4>
+                    <div class="grid grid-cols-2 gap-3">
+                      <div class="bg-white rounded-lg p-3">
+                        <div class="flex justify-between items-center">
+                          <span class="text-gray-600">思政维度</span>
+                          <span class="font-bold" :class="getDimensionClass(getClassStats(cls.id).dimensionStats.sizheng.avg)">
+                            {{ getClassStats(cls.id).dimensionStats.sizheng.avg }}分
+                          </span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                          <div class="h-2 rounded-full" :class="getDimensionBarClass(getClassStats(cls.id).dimensionStats.sizheng.avg)"
+                               :style="{width: getClassStats(cls.id).dimensionStats.sizheng.avg + '%'}"></div>
+                        </div>
+                      </div>
+                      <div class="bg-white rounded-lg p-3">
+                        <div class="flex justify-between items-center">
+                          <span class="text-gray-600">心理慰藉</span>
+                          <span class="font-bold" :class="getDimensionClass(getClassStats(cls.id).dimensionStats.xinli.avg)">
+                            {{ getClassStats(cls.id).dimensionStats.xinli.avg }}分
+                          </span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                          <div class="h-2 rounded-full" :class="getDimensionBarClass(getClassStats(cls.id).dimensionStats.xinli.avg)"
+                               :style="{width: getClassStats(cls.id).dimensionStats.xinli.avg + '%'}"></div>
+                        </div>
+                      </div>
+                      <div class="bg-white rounded-lg p-3">
+                        <div class="flex justify-between items-center">
+                          <span class="text-gray-600">健康宣教</span>
+                          <span class="font-bold" :class="getDimensionClass(getClassStats(cls.id).dimensionStats.jiankang.avg)">
+                            {{ getClassStats(cls.id).dimensionStats.jiankang.avg }}分
+                          </span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                          <div class="h-2 rounded-full" :class="getDimensionBarClass(getClassStats(cls.id).dimensionStats.jiankang.avg)"
+                               :style="{width: getClassStats(cls.id).dimensionStats.jiankang.avg + '%'}"></div>
+                        </div>
+                      </div>
+                      <div class="bg-white rounded-lg p-3">
+                        <div class="flex justify-between items-center">
+                          <span class="text-gray-600">康复训练</span>
+                          <span class="font-bold" :class="getDimensionClass(getClassStats(cls.id).dimensionStats.kangfu.avg)">
+                            {{ getClassStats(cls.id).dimensionStats.kangfu.avg }}分
+                          </span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                          <div class="h-2 rounded-full" :class="getDimensionBarClass(getClassStats(cls.id).dimensionStats.kangfu.avg)"
+                               :style="{width: getClassStats(cls.id).dimensionStats.kangfu.avg + '%'}"></div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- 分析建议 -->
+                    <div class="mt-3 p-3 bg-yellow-50 rounded-lg text-sm">
+                      <p class="font-medium text-yellow-800">💡 教学建议：</p>
+                      <p class="text-yellow-700 mt-1">{{ getDimensionAdvice(cls.id) }}</p>
+                    </div>
+                  </div>
+                  
+                  <!-- 学生列表 -->
+                  <div>
+                    <h4 class="font-bold text-gray-700 mb-3">👥 学生学习情况</h4>
+                    <div v-if="(classStudentsMap[cls.id] || []).length === 0" class="text-gray-400 text-center py-4">
+                      该班级暂无学生
+                    </div>
+                    <div v-else class="space-y-2">
+                      <div v-for="student in classStudentsMap[cls.id]" :key="student.id"
+                           class="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100"
+                           @click="viewStudentDetail(student)">
+                        <div class="flex justify-between items-center">
+                          <div>
+                            <p class="font-medium">{{ student.name }}</p>
+                            <p class="text-xs text-gray-500">{{ student.email }}</p>
+                          </div>
+                          <div class="flex items-center gap-4 text-sm">
+                            <div class="text-center">
+                              <p class="font-bold text-blue-600">{{ getStudentStats(student.id).totalPractices }}</p>
+                              <p class="text-xs text-gray-400">练习次数</p>
+                            </div>
+                            <div class="text-center">
+                              <p class="font-bold" :class="getScoreClass(getStudentStats(student.id).avgScore)">
+                                {{ getStudentStats(student.id).avgScore || '--' }}
+                              </p>
+                              <p class="text-xs text-gray-400">平均分</p>
+                            </div>
+                            <div class="text-center">
+                              <p class="font-bold text-green-600">{{ getStudentStats(student.id).highestScore || '--' }}</p>
+                              <p class="text-xs text-gray-400">最高分</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 学生详细记录弹窗 -->
+          <div v-if="selectedStudent" class="bg-white rounded-xl p-6 shadow">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-bold">{{ selectedStudent.name }} 的练习记录</h3>
+              <button @click="selectedStudent = null" class="text-gray-500 text-sm hover:text-gray-700">✕ 关闭</button>
+            </div>
+            <div v-if="studentRecords.length === 0" class="text-gray-400 text-center py-4">
+              暂无练习记录
+            </div>
+            <div v-else class="space-y-3 max-h-96 overflow-y-auto">
+              <div v-for="record in studentRecords" :key="record.id" class="p-3 bg-gray-50 rounded-lg">
+                <div class="flex justify-between items-start mb-2">
+                  <div>
+                    <p class="font-medium">{{ record.case_data?.caseName || '练习记录' }}</p>
+                    <p class="text-sm text-gray-500">{{ formatDate(record.created_at) }}</p>
+                  </div>
+                  <p class="text-xl font-bold" :class="getScoreClass(record.score)">
+                    {{ record.score }}分
+                  </p>
+                </div>
+                <div v-if="record.dimensions" class="grid grid-cols-2 gap-2 text-sm">
+                  <div class="flex justify-between">
+                    <span class="text-gray-500">思政维度:</span>
+                    <span class="font-medium">{{ record.dimensions.sizheng || '--' }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-500">心理慰藉:</span>
+                    <span class="font-medium">{{ record.dimensions.xinli || '--' }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-500">健康宣教:</span>
+                    <span class="font-medium">{{ record.dimensions.jiankang || '--' }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-500">康复训练:</span>
+                    <span class="font-medium">{{ record.dimensions.kangfu || '--' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <!-- 管理员首页 -->
         <div v-else-if="currentUser.role === 'admin'" class="space-y-4">
           <div class="bg-white rounded-xl p-6 shadow">
@@ -927,6 +1123,18 @@ const classStudentsMap = computed(() => {
   return map
 })
 
+// 老师界面相关
+const selectedTeacherClass = ref(null)
+const selectedStudent = ref(null)
+const studentRecords = ref([])
+const allRecords = ref([]) // 所有练习记录
+
+// 老师负责的班级
+const teacherClasses = computed(() => {
+  if (!currentUser.value.class_id) return []
+  return classes.value.filter(c => c.id === currentUser.value.class_id)
+})
+
 // 练习历史
 const practiceHistory = ref([])
 
@@ -996,6 +1204,30 @@ async function loadData() {
       .limit(10)
     
     if (data) practiceHistory.value = data
+  } else if (currentUser.value.role === 'teacher') {
+    // 老师需要加载：学生列表、班级列表、所有练习记录
+    const { data: studentsData } = await supabase
+      .from('users')
+      .select('*, classes(name)')
+      .eq('role', 'student')
+    
+    if (studentsData) {
+      students.value = studentsData.map(s => ({
+        ...s,
+        class_name: s.classes?.name || '未分配'
+      }))
+    }
+    
+    const { data: classesData } = await supabase
+      .from('classes')
+      .select('*')
+    
+    if (classesData) {
+      classes.value = classesData
+    }
+    
+    // 加载所有练习记录
+    await loadAllRecords()
   } else if (currentUser.value.role === 'admin') {
     // 加载学生列表
     const { data: studentsData } = await supabase
@@ -2349,5 +2581,125 @@ function formatDate(dateStr) {
     minute: '2-digit'
   })
 }
+
+// 获取学生统计数据
+function getStudentStats(studentId) {
+  const records = allRecords.value.filter(r => r.user_id === studentId)
+  if (records.length === 0) return { totalPractices: 0, avgScore: 0, highestScore: 0, lowestScore: 0 }
+  const scores = records.map(r => r.score).filter(s => s)
+  return {
+    totalPractices: records.length,
+    avgScore: scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0,
+    highestScore: scores.length ? Math.max(...scores) : 0,
+    lowestScore: scores.length ? Math.min(...scores) : 0
+  }
+}
+
+// 获取班级整体统计
+function getClassStats(classId) {
+  const classStudents = classStudentsMap.value[classId] || []
+  if (classStudents.length === 0) return null
+  
+  const studentIds = classStudents.map(s => s.id)
+  const classRecords = allRecords.value.filter(r => studentIds.includes(r.user_id))
+  
+  if (classRecords.length === 0) {
+    return { totalPractices: 0, avgScore: 0, highestScore: 0, lowestScore: 0, studentCount: classStudents.length, dimensionStats: null }
+  }
+  
+  const scores = classRecords.map(r => r.score).filter(s => s)
+  
+  // 四维度统计
+  const dimensionStats = { sizheng: [], xinli: [], jiankang: [], kangfu: [] }
+  classRecords.forEach(r => {
+    if (r.dimensions) {
+      if (r.dimensions.sizheng) dimensionStats.sizheng.push(r.dimensions.sizheng)
+      if (r.dimensions.xinli) dimensionStats.xinli.push(r.dimensions.xinli)
+      if (r.dimensions.jiankang) dimensionStats.jiankang.push(r.dimensions.jiankang)
+      if (r.dimensions.kangfu) dimensionStats.kangfu.push(r.dimensions.kangfu)
+    }
+  })
+  
+  const avgDimension = (arr) => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0
+  
+  return {
+    totalPractices: classRecords.length,
+    avgScore: scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0,
+    highestScore: scores.length ? Math.max(...scores) : 0,
+    lowestScore: scores.length ? Math.min(...scores) : 0,
+    studentCount: classStudents.length,
+    dimensionStats: {
+      sizheng: { avg: avgDimension(dimensionStats.sizheng), count: dimensionStats.sizheng.length },
+      xinli: { avg: avgDimension(dimensionStats.xinli), count: dimensionStats.xinli.length },
+      jiankang: { avg: avgDimension(dimensionStats.jiankang), count: dimensionStats.jiankang.length },
+      kangfu: { avg: avgDimension(dimensionStats.kangfu), count: dimensionStats.kangfu.length }
+    }
+  }
+}
+
+// 查看学生详情
+async function viewStudentDetail(student) {
+  selectedStudent.value = student
+  studentRecords.value = allRecords.value.filter(r => r.user_id === student.id)
+}
+
+// 加载所有练习记录（老师用）
+async function loadAllRecords() {
+  const { data } = await supabase
+    .from('practice_records')
+    .select('*')
+    .order('created_at', { ascending: false })
+  allRecords.value = data || []
+}
+
+// 分数颜色类
+function getScoreClass(score) {
+  if (!score) return 'text-gray-400'
+  if (score >= 80) return 'text-green-600'
+  if (score >= 60) return 'text-orange-600'
+  return 'text-red-600'
+}
+
+// 维度分数颜色类
+function getDimensionClass(score) {
+  if (!score) return 'text-gray-400'
+  if (score >= 80) return 'text-green-600'
+  if (score >= 60) return 'text-orange-600'
+  return 'text-red-600'
+}
+
+// 维度进度条颜色类
+function getDimensionBarClass(score) {
+  if (!score) return 'bg-gray-300'
+  if (score >= 80) return 'bg-green-500'
+  if (score >= 60) return 'bg-orange-500'
+  return 'bg-red-500'
+}
+
+// 维度分析建议
+function getDimensionAdvice(classId) {
+  const stats = getClassStats(classId)
+  if (!stats || !stats.dimensionStats) return '暂无数据'
+  
+  const dims = [
+    { name: '思政维度', avg: stats.dimensionStats.sizheng.avg, key: 'sizheng' },
+    { name: '心理慰藉', avg: stats.dimensionStats.xinli.avg, key: 'xinli' },
+    { name: '健康宣教', avg: stats.dimensionStats.jiankang.avg, key: 'jiankang' },
+    { name: '康复训练', avg: stats.dimensionStats.kangfu.avg, key: 'kangfu' }
+  ].filter(d => d.avg > 0)
+  
+  if (dims.length === 0) return '暂无数据'
+  
+  const sorted = [...dims].sort((a, b) => a.avg - b.avg)
+  const lowest = sorted[0]
+  const highest = sorted[sorted.length - 1]
+  
+  if (lowest.avg === highest.avg) {
+    return `班级各维度表现均衡，平均${highest.avg}分，继续保持！`
+  }
+  
+  return `"${lowest.name}"平均${lowest.avg}分，是班级薄弱环节，建议加强相关训练；"${highest.name}"平均${highest.avg}分，表现最好。`
+}
+
 </script>
 // 强制刷新版本 Wed Apr  8 00:35:35 CST 2026
