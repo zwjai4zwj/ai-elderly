@@ -1102,7 +1102,7 @@ async function generateCase() {
         concerns: ['健康问题', '子女关心'],
         communicationStyle: caseProfile.dialect === '普通话' ? '标准普通话' : `带${caseProfile.dialect}口音`
       },
-      openingLine: '大夫，我最近总是头晕，您帮我看看吧。'
+      openingLine: '护理员，我最近总是头晕，你帮我看看吧。'
     }
     currentStep.value = 'case'
   } finally {
@@ -1113,7 +1113,7 @@ async function generateCase() {
 // 开始对话
 function startChat() {
   messages.value = [
-    { role: 'assistant', content: generatedCase.value.openingLine || '你好，大夫。' }
+    { role: 'assistant', content: generatedCase.value.openingLine || '你好，护理员。' }
   ]
   currentStep.value = 'chat'
 }
@@ -1189,6 +1189,21 @@ async function sendMessage() {
     const dialect = caseProfile.dialect || '普通话'
     const dialectTip = dialectTips[dialect] || '用普通话'
     
+    // 居住类型约束
+    let livingConstraint = ''
+    if (livingType.includes('独居')) {
+      livingConstraint = '- 你是独居老人，没有老伴在身边，绝不能提到老伴或老伴在干什么'
+    } else if (livingType.includes('丧偶')) {
+      livingConstraint = '- 你是丧偶老人，老伴已经去世，绝不能说老伴在世或老伴在干什么，只能说"老伴走了X年了"'
+    } else if (livingType.includes('有老伴')) {
+      livingConstraint = '- 你有老伴在身边，可以提到老伴的情况'
+    }
+    if (livingType.includes('无儿女')) {
+      livingConstraint += '\n- 你没有儿女，绝不能提到儿女或孙子孙女'
+    } else if (livingType.includes('儿女在外地')) {
+      livingConstraint += '\n- 你的儿女在外地工作，不在身边，可以提到想念他们'
+    }
+    
     const systemPrompt = `你是${name}，一位${age}岁${gender}老人。
 
 【你的情况】
@@ -1196,6 +1211,9 @@ async function sendMessage() {
 - 住${livingPlace}，${livingType}
 - 以前是${occupation}
 - 平时爱${hobbies}
+
+【居住类型约束 - 极其重要】
+${livingConstraint || '- 按照你的居住情况如实回答'}
 
 【对话规则】
 你现在是真实的老人，学生问什么就答什么！
