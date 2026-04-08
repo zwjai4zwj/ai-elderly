@@ -1325,16 +1325,17 @@ async function login() {
       .select('*, classes(name)')
       .eq('email', loginEmail)
       .eq('password', loginForm.password)
-      .single()
+      .limit(1)
     
-    if (userData) {
+    if (userData && userData.length > 0) {
+      const user = userData[0]
       currentUser.value = {
-        id: userData.id,
-        email: userData.email,
-        name: userData.name,
-        role: userData.role || 'student',
-        class_id: userData.class_id,
-        class_name: userData.classes?.name
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role || 'student',
+        class_id: user.class_id,
+        class_name: user.classes?.name
       }
       localStorage.setItem('currentUser', JSON.stringify(currentUser.value))
       isLoggedIn.value = true
@@ -1350,16 +1351,17 @@ async function login() {
         .select('*, classes(name)')
         .eq('email', teacherEmail)
         .eq('password', loginForm.password)
-        .single()
+        .limit(1)
       
-      if (teacherData) {
+      if (teacherData && teacherData.length > 0) {
+        const t = teacherData[0]
         currentUser.value = {
-          id: teacherData.id,
-          email: teacherData.email,
-          name: teacherData.name,
-          role: teacherData.role || 'teacher',
-          class_id: teacherData.class_id,
-          class_name: teacherData.classes?.name
+          id: t.id,
+          email: t.email,
+          name: t.name,
+          role: t.role || 'teacher',
+          class_id: t.class_id,
+          class_name: t.classes?.name
         }
         localStorage.setItem('currentUser', JSON.stringify(currentUser.value))
         isLoggedIn.value = true
@@ -2356,6 +2358,18 @@ async function createStudent() {
   const email = `${accountName}@student.local`
   
   try {
+    // 检查账号是否已存在
+    const { data: existing } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .limit(1)
+    
+    if (existing && existing.length > 0) {
+      alert(`账号已存在：${email}\n请更换账号名！`)
+      return
+    }
+    
     const studentId = 'student_' + Date.now()
     const { data, error } = await supabase
       .from('users')
@@ -2410,6 +2424,7 @@ async function batchImportStudents() {
   try {
     const className = classes.value.find(c => c.id === batchClassId.value)?.name || ''
     let successCount = 0
+    let skipCount = 0
     
     for (const line of lines) {
       const parts = line.split(',').map(p => p.trim())
@@ -2425,8 +2440,21 @@ async function batchImportStudents() {
         accountName = name
       }
       
-      const studentId = 'student_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
       const email = `${accountName}@student.local`
+      
+      // 检查账号是否已存在
+      const { data: existing } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', email)
+        .limit(1)
+      
+      if (existing && existing.length > 0) {
+        skipCount++
+        continue // 跳过已存在的账号
+      }
+      
+      const studentId = 'student_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
       
       const { data, error } = await supabase
         .from('users')
@@ -2452,7 +2480,12 @@ async function batchImportStudents() {
       }
     }
     
-    batchImportMsg.value = `成功导入 ${successCount} 名学生，默认密码：123456`
+    let msg = `成功导入 ${successCount} 名学生`
+    if (skipCount > 0) {
+      msg += `，跳过 ${skipCount} 个重复账号`
+    }
+    msg += `，默认密码：123456`
+    batchImportMsg.value = msg
     batchImportSuccess.value = true
     batchStudents.value = ''
     
