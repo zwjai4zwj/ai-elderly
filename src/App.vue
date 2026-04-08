@@ -1051,13 +1051,15 @@ async function generateCase() {
   "openingLine": "老人的开场白（要自然，符合老人身份和疾病情况）"
 }`
 
-    const response = await fetch('/generate-case', {
+    // 使用 Supabase Edge Function 生成病例
+    const response = await fetch('https://todnsmeovkpmniqcwucm.supabase.co/functions/v1/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        prompt: prompt
+        messages: [{ role: 'user', content: prompt }],
+        mode: 'generate'
       })
     })
     
