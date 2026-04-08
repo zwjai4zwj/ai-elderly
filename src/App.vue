@@ -1563,7 +1563,7 @@ async function speakWithXunfei(text, gender) {
           parameter: {
             tts: {
               vcn: voiceName,
-              speed: 50,  // 语速正常
+              speed: 70,  // 语速稍快，更自然
               volume: 60,
               pitch: 45,  // 音调稍低，更像老人
               audio: {
