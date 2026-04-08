@@ -520,6 +520,26 @@
                 {{ score.totalScore }}
               </div>
               <p class="text-gray-500">总分 / 100</p>
+              
+              <!-- 与上次对比 -->
+              <div v-if="lastScore !== null" class="mt-4 p-3 rounded-lg" 
+                   :class="score.totalScore >= lastScore ? 'bg-green-50' : 'bg-red-50'">
+                <p class="text-sm">
+                  <span v-if="score.totalScore > lastScore" class="text-green-600">
+                    📈 比上次提高了 {{ score.totalScore - lastScore }} 分！继续加油！
+                  </span>
+                  <span v-else-if="score.totalScore < lastScore" class="text-red-600">
+                    📉 比上次下降了 {{ lastScore - score.totalScore }} 分，再接再厉！
+                  </span>
+                  <span v-else class="text-blue-600">
+                    ➡️ 与上次持平，保持稳定！
+                  </span>
+                </p>
+                <p class="text-xs text-gray-500 mt-1">上次得分：{{ lastScore }} 分</p>
+              </div>
+              <div v-else class="mt-4 p-3 bg-blue-50 rounded-lg">
+                <p class="text-sm text-blue-600">🎉 这是你的第一次练习！</p>
+              </div>
             </div>
             
             <div class="bg-white rounded-xl p-6 shadow">
@@ -801,6 +821,12 @@ const stats = computed(() => {
     avgScore: scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0,
     highestScore: scores.length ? Math.max(...scores) : 0
   }
+})
+
+// 上次得分（用于对比）
+const lastScore = computed(() => {
+  if (practiceHistory.value.length === 0) return null
+  return practiceHistory.value[0]?.score || null
 })
 
 const adminStats = ref({
@@ -1563,7 +1589,7 @@ async function speakWithXunfei(text, gender) {
           parameter: {
             tts: {
               vcn: voiceName,
-              speed: 70,  // 语速稍快，更自然
+              speed: 85,  // 语速较快，更自然流畅
               volume: 60,
               pitch: 45,  // 音调稍低，更像老人
               audio: {
