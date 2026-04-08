@@ -823,10 +823,12 @@ const stats = computed(() => {
   }
 })
 
-// 上次得分（用于对比）
+// 上次得分（用于对比，取倒数第二条记录）
 const lastScore = computed(() => {
-  if (practiceHistory.value.length === 0) return null
-  return practiceHistory.value[0]?.score || null
+  if (practiceHistory.value.length < 1) return null
+  // 如果是刚完成的评分，practiceHistory[0] 是当前记录，需要取 [1]
+  // 如果是查看历史记录，取 [0] 的上一次
+  return practiceHistory.value.length > 1 ? practiceHistory.value[1]?.score : null
 })
 
 const adminStats = ref({
@@ -1827,9 +1829,24 @@ ${chatHistory}
     isTyping.value = false
     currentStep.value = 'score'
     
-    // 刷新历史
-    if (currentUser.value.role === 'student') {
-      loadData()
+    // 保存评分结果到数据库
+    if (currentUser.value.role === 'student' && supabase) {
+      try {
+        await supabase.from('practice_records').insert({
+          user_id: currentUser.value.id,
+          case_name: generatedCase.value.caseName || '练习记录',
+          score: score.value.totalScore,
+          dimensions: score.value.dimensions,
+          feedback: score.value.feedback,
+          case_data: generatedCase.value,
+          created_at: new Date().toISOString()
+        })
+        console.log('评分记录已保存')
+        // 重新加载数据以更新统计和对比
+        await loadData()
+      } catch (e) {
+        console.error('保存评分记录失败:', e)
+      }
     }
   }
 }
