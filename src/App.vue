@@ -392,13 +392,76 @@
           </div>
           
           <!-- 对话界面 -->
-          <div v-else-if="currentStep === 'chat'" class="flex flex-col h-[calc(100vh-120px)]">
-            <!-- 对话提示 -->
-            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-2">
-              <p class="text-sm text-yellow-700">💡 您正在与 {{ generatedCase.basicInfo?.name }} 对话，请以康养专业学生的身份进行沟通</p>
+          <div v-else-if="currentStep === 'chat'" class="flex h-[calc(100vh-120px)] gap-4">
+            <!-- 病例信息卡片（左侧） -->
+            <div class="w-72 flex-shrink-0">
+              <div class="bg-white rounded-xl shadow p-4 h-full overflow-y-auto">
+                <h3 class="font-bold text-blue-600 mb-3 flex items-center">
+                  <span>📋</span> 病例信息
+                </h3>
+                
+                <div class="space-y-3 text-sm">
+                  <!-- 基本信息 -->
+                  <div class="bg-blue-50 rounded-lg p-3">
+                    <p class="font-medium text-blue-800 mb-2">基本信息</p>
+                    <div class="space-y-1 text-gray-700">
+                      <p><span class="text-gray-500">姓名：</span>{{ generatedCase.basicInfo?.name }}</p>
+                      <p><span class="text-gray-500">年龄：</span>{{ generatedCase.basicInfo?.age }}岁</p>
+                      <p><span class="text-gray-500">性别：</span>{{ generatedCase.basicInfo?.gender }}</p>
+                      <p><span class="text-gray-500">职业：</span>{{ generatedCase.basicInfo?.occupation }}</p>
+                    </div>
+                  </div>
+                  
+                  <!-- 病史信息 -->
+                  <div class="bg-orange-50 rounded-lg p-3">
+                    <p class="font-medium text-orange-800 mb-2">疾病情况</p>
+                    <div class="space-y-1 text-gray-700">
+                      <p><span class="text-gray-500">主诉：</span>{{ generatedCase.medicalHistory?.chiefComplaint }}</p>
+                      <p><span class="text-gray-500">用药：</span>{{ Array.isArray(generatedCase.medicalHistory?.medications) ? generatedCase.medicalHistory?.medications?.join('、') : generatedCase.medicalHistory?.medications }}</p>
+                    </div>
+                  </div>
+                  
+                  <!-- 性格特点 -->
+                  <div class="bg-green-50 rounded-lg p-3">
+                    <p class="font-medium text-green-800 mb-2">性格特点</p>
+                    <div class="space-y-1 text-gray-700">
+                      <p>{{ Array.isArray(generatedCase.personality?.traits) ? generatedCase.personality?.traits?.join('、') : generatedCase.personality?.traits }}</p>
+                      <p class="text-xs text-gray-500 mt-1">关注：{{ Array.isArray(generatedCase.personality?.concerns) ? generatedCase.personality?.concerns?.join('、') : generatedCase.personality?.concerns }}</p>
+                    </div>
+                  </div>
+                  
+                  <!-- 居住情况 -->
+                  <div class="bg-purple-50 rounded-lg p-3">
+                    <p class="font-medium text-purple-800 mb-2">居住情况</p>
+                    <div class="space-y-1 text-gray-700">
+                      <p><span class="text-gray-500">场所：</span>{{ generatedCase.basicInfo?.livingPlace || caseProfile.livingPlace }}</p>
+                      <p><span class="text-gray-500">类型：</span>{{ generatedCase.basicInfo?.familyStatus || (Array.isArray(caseProfile.livingTypes) ? caseProfile.livingTypes?.join('、') : caseProfile.livingTypes) }}</p>
+                    </div>
+                  </div>
+                  
+                  <!-- 方言 -->
+                  <div class="bg-gray-50 rounded-lg p-3">
+                    <p class="font-medium text-gray-800 mb-1">方言偏好</p>
+                    <p class="text-gray-600">{{ caseProfile.dialect }}</p>
+                  </div>
+                  
+                  <!-- 爱好 -->
+                  <div class="bg-gray-50 rounded-lg p-3">
+                    <p class="font-medium text-gray-800 mb-1">兴趣爱好</p>
+                    <p class="text-gray-600">{{ Array.isArray(generatedCase.basicInfo?.hobby) ? generatedCase.basicInfo?.hobby?.join('、') : (generatedCase.basicInfo?.hobby || (Array.isArray(caseProfile.hobbies) ? caseProfile.hobbies?.join('、') : caseProfile.hobbies)) }}</p>
+                  </div>
+                </div>
+              </div>
             </div>
             
-            <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-100 rounded-t-lg">
+            <!-- 聊天区域（右侧） -->
+            <div class="flex-1 flex flex-col">
+              <!-- 对话提示 -->
+              <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-2">
+                <p class="text-sm text-yellow-700">💡 您正在与 {{ generatedCase.basicInfo?.name }} 对话，请以康养专业学生的身份进行沟通</p>
+              </div>
+              
+              <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-100 rounded-t-lg">
               <div v-for="(msg, i) in messages" :key="i" 
                    :class="msg.role === 'user' ? 'text-right' : 'text-left'">
                 <div class="text-xs text-gray-400 mb-1">
@@ -445,7 +508,8 @@
                 结束对话并评分
               </button>
             </div>
-          </div>
+            </div><!-- 关闭聊天区域div -->
+          </div><!-- 关闭对话界面div -->
           
           <!-- 评分报告 -->
           <div v-else-if="currentStep === 'score'" class="space-y-4">
