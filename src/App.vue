@@ -1345,7 +1345,7 @@ function generateSmartReply(userMsg, elder) {
     const replies = [
       `${slang}吃饭还行，就是牙不行了，硬的咬不动，就喝点粥吃点软的。`,
       `${slang}一个人住，懒得做，有时候就凑合一口。`,
-      `${slang}医生说少吃盐少吃油，可我这嘴吧，吃清淡了没滋味啊。`
+      `${slang}护理员说少吃盐少吃油，可我这嘴吧，吃清淡了没滋味啊。`
     ]
     return replies[Math.floor(Math.random() * replies.length)]
   }
@@ -1398,7 +1398,7 @@ function generateSmartReply(userMsg, elder) {
     const replies = [
       `${slang}${disease}啊，好多年了，一直在吃药控制。`,
       `${slang}这病吧，时好时坏，也没啥好办法，就这样熬着呗。`,
-      `${slang}医生说要注意饮食，可我这嘴吧，管不住。`
+      `${slang}护理员说要注意饮食，可我这嘴吧，管不住。`
     ]
     return replies[Math.floor(Math.random() * replies.length)]
   }
