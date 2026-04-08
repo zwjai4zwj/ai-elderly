@@ -1178,9 +1178,13 @@ async function sendMessage() {
     const gender = caseInfo.basicInfo?.gender || '男'
     const disease = caseInfo.medicalHistory?.pastHistory || '高血压'
     const livingPlace = caseInfo.basicInfo?.livingPlace || caseProfile.livingPlace || '家里'
-    const livingType = (caseInfo.basicInfo?.familyStatus || caseProfile.livingTypes || ['独居']).join('、')
+    // 处理 livingType：可能是字符串或数组
+    const livingTypeRaw = caseInfo.basicInfo?.familyStatus || caseProfile.livingTypes || ['独居']
+    const livingType = Array.isArray(livingTypeRaw) ? livingTypeRaw.join('、') : livingTypeRaw
     const occupation = caseInfo.basicInfo?.occupation || caseProfile.occupation || '普通工人'
-    const hobbies = (caseInfo.basicInfo?.hobby || caseProfile.hobbies || ['看电视']).join('、')
+    // 处理 hobbies：可能是字符串或数组
+    const hobbiesRaw = caseInfo.basicInfo?.hobby || caseProfile.hobbies || ['看电视']
+    const hobbies = Array.isArray(hobbiesRaw) ? hobbiesRaw.join('、') : hobbiesRaw
     const studentTitle = caseInfo.basicInfo?.studentTitle || caseProfile.studentTitle || '大夫'
     const dialect = caseProfile.dialect || '普通话'
     const dialectTip = dialectTips[dialect] || '用普通话'
