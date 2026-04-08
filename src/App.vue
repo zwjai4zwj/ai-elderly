@@ -618,8 +618,9 @@
               
               <div class="mt-4">
                 <p class="text-sm text-gray-500 mb-2">已有班级</p>
-                <div v-for="cls in classes" :key="cls.id" class="p-2 bg-gray-50 rounded mb-1 text-sm">
-                  {{ cls.name }} ({{ cls.student_count || 0 }}人)
+                <div v-for="cls in classes" :key="cls.id" class="p-2 bg-gray-50 rounded mb-1 text-sm flex justify-between items-center">
+                  <span>{{ cls.name }} ({{ cls.student_count || 0 }}人)</span>
+                  <button @click="deleteClass(cls.id)" class="text-red-500 hover:text-red-700 text-xs">删除</button>
                 </div>
               </div>
             </div>
@@ -631,6 +632,11 @@
                 <input 
                   v-model="newStudent.name" 
                   placeholder="学生姓名"
+                  class="w-full px-3 py-2 border rounded-lg"
+                />
+                <input 
+                  v-model="newStudent.accountName" 
+                  placeholder="登录账号（姓名拼音，如zhangsan）"
                   class="w-full px-3 py-2 border rounded-lg"
                 />
                 <select v-model="newStudent.classId" class="w-full px-3 py-2 border rounded-lg">
@@ -661,7 +667,7 @@
                 </select>
                 <textarea 
                   v-model="batchStudents" 
-                  placeholder="每行一个学生姓名，例如：&#10;张三&#10;李四&#10;王五"
+                  placeholder="每行格式：拼音账号,姓名&#10;例如：&#10;zhangsan,张三&#10;lisi,李四"
                   class="w-full px-3 py-2 border rounded-lg h-24 text-sm"
                 ></textarea>
                 <button 
@@ -690,7 +696,10 @@
                     <span class="font-medium">{{ student.name }}</span>
                     <span class="text-sm text-gray-400 ml-2">{{ student.email }}</span>
                   </div>
-                  <span class="text-sm text-gray-500">{{ student.class_name }}</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm text-gray-500">{{ student.class_name }}</span>
+                    <button @click="deleteStudent(student.id)" class="text-red-500 hover:text-red-700 text-sm">删除</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -705,6 +714,11 @@
                 <input 
                   v-model="newTeacher.name" 
                   placeholder="老师姓名"
+                  class="w-full px-3 py-2 border rounded-lg"
+                />
+                <input 
+                  v-model="newTeacher.accountName" 
+                  placeholder="登录账号（姓名拼音，如zhanglaoshi）"
                   class="w-full px-3 py-2 border rounded-lg"
                 />
                 <select v-model="newTeacher.classId" class="w-full px-3 py-2 border rounded-lg">
@@ -731,7 +745,7 @@
                 <h4 class="font-bold mb-2 text-sm">批量创建老师</h4>
                 <textarea 
                   v-model="batchTeachers" 
-                  placeholder="每行格式：老师姓名,班级名称&#10;例如：&#10;张老师,护理1班&#10;李老师,护理2班"
+                  placeholder="每行格式：拼音账号,姓名,班级名称&#10;例如：&#10;zhanglaoshi,张老师,护理1班&#10;lilaoshi,李老师,护理2班"
                   class="w-full px-3 py-2 border rounded-lg h-24 text-sm"
                 ></textarea>
                 <button 
@@ -760,7 +774,10 @@
                     <span class="font-medium">{{ teacher.name }}</span>
                     <span class="text-sm text-gray-400 ml-2">账号: {{ teacher.email }}</span>
                   </div>
-                  <span class="text-sm text-gray-500">{{ teacher.class_name || '未分配班级' }}</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm text-gray-500">{{ teacher.class_name || '未分配班级' }}</span>
+                    <button @click="deleteTeacher(teacher.id)" class="text-red-500 hover:text-red-700 text-sm">删除</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -872,8 +889,8 @@ const classes = ref([])
 const students = ref([])
 const teachers = ref([])
 const newClass = reactive({ name: '' })
-const newStudent = reactive({ name: '', classId: '', password: '' })
-const newTeacher = reactive({ name: '', classId: '', password: '' })
+const newStudent = reactive({ name: '', accountName: '', classId: '', password: '' })
+const newTeacher = reactive({ name: '', accountName: '', classId: '', password: '' })
 const batchClassId = ref('')
 const batchStudents = ref('')
 const batchTeachers = ref('')
@@ -1972,6 +1989,56 @@ async function createClass() {
   }
 }
 
+// 删除班级
+async function deleteClass(classId) {
+  if (!confirm('确定要删除这个班级吗？班级内的学生将变为未分配状态。')) return
+  
+  const { error } = await supabase
+    .from('classes')
+    .delete()
+    .eq('id', classId)
+  
+  if (!error) {
+    classes.value = classes.value.filter(c => c.id !== classId)
+    // 刷新学生列表，更新班级名称
+    loadData()
+  } else {
+    alert('删除失败：' + error.message)
+  }
+}
+
+// 删除学生
+async function deleteStudent(studentId) {
+  if (!confirm('确定要删除这个学生吗？')) return
+  
+  const { error } = await supabase
+    .from('users')
+    .delete()
+    .eq('id', studentId)
+  
+  if (!error) {
+    students.value = students.value.filter(s => s.id !== studentId)
+  } else {
+    alert('删除失败：' + error.message)
+  }
+}
+
+// 删除老师
+async function deleteTeacher(teacherId) {
+  if (!confirm('确定要删除这个老师吗？')) return
+  
+  const { error } = await supabase
+    .from('users')
+    .delete()
+    .eq('id', teacherId)
+  
+  if (!error) {
+    teachers.value = teachers.value.filter(t => t.id !== teacherId)
+  } else {
+    alert('删除失败：' + error.message)
+  }
+}
+
 // 创建学生
 async function createStudent() {
   if (!newStudent.name) {
@@ -1980,7 +2047,9 @@ async function createStudent() {
   }
   
   const password = newStudent.password || '123456'
-  const email = `${Date.now()}@student.local`
+  // 使用姓名拼音作为账号（用户需要输入拼音账号）
+  const accountName = newStudent.accountName || newStudent.name
+  const email = `${accountName}@student.local`
   
   try {
     const studentId = 'student_' + Date.now()
@@ -2005,6 +2074,7 @@ async function createStudent() {
       })
       alert(`学生创建成功！\n账号：${email}\n密码：${password}`)
       newStudent.name = ''
+      newStudent.accountName = ''
       newStudent.classId = ''
       newStudent.password = ''
     } else if (error) {
@@ -2018,14 +2088,14 @@ async function createStudent() {
 // 批量导入学生
 async function batchImportStudents() {
   if (!batchClassId.value || !batchStudents.value.trim()) {
-    batchImportMsg.value = '请选择班级并输入学生姓名'
+    batchImportMsg.value = '请选择班级并输入学生信息'
     batchImportSuccess.value = false
     return
   }
   
-  const names = batchStudents.value.trim().split('\n').map(n => n.trim()).filter(n => n)
-  if (names.length === 0) {
-    batchImportMsg.value = '请输入至少一个学生姓名'
+  const lines = batchStudents.value.trim().split('\n').map(n => n.trim()).filter(n => n)
+  if (lines.length === 0) {
+    batchImportMsg.value = '请输入至少一个学生信息'
     batchImportSuccess.value = false
     return
   }
@@ -2036,9 +2106,22 @@ async function batchImportStudents() {
     const className = classes.value.find(c => c.id === batchClassId.value)?.name || ''
     let successCount = 0
     
-    for (const name of names) {
+    for (const line of lines) {
+      const parts = line.split(',').map(p => p.trim())
+      let accountName, name
+      
+      if (parts.length >= 2) {
+        // 格式：拼音账号,姓名
+        accountName = parts[0]
+        name = parts[1]
+      } else {
+        // 格式：姓名（兼容旧格式）
+        name = parts[0]
+        accountName = name
+      }
+      
       const studentId = 'student_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
-      const email = `${studentId}@student.local`
+      const email = `${accountName}@student.local`
       
       const { data, error } = await supabase
         .from('users')
@@ -2088,7 +2171,8 @@ async function createTeacher() {
   
   const password = newTeacher.password || '123456'
   const teacherId = 'teacher_' + Date.now()
-  const email = `${Date.now()}@teacher.local`
+  const accountName = newTeacher.accountName || newTeacher.name
+  const email = `${accountName}@teacher.local`
   
   try {
     const { data, error } = await supabase
@@ -2114,6 +2198,7 @@ async function createTeacher() {
       })
       alert(`老师创建成功！\n姓名：${newTeacher.name}\n账号：${email}\n密码：${password}`)
       newTeacher.name = ''
+      newTeacher.accountName = ''
       newTeacher.classId = ''
       newTeacher.password = ''
     } else if (error) {
@@ -2148,12 +2233,29 @@ async function batchImportTeachers() {
       const parts = line.split(',').map(p => p.trim())
       if (parts.length < 1) continue
       
-      const name = parts[0]
-      const className = parts[1] || ''
+      let accountName, name, className
+      
+      if (parts.length >= 3) {
+        // 格式：拼音账号,姓名,班级名称
+        accountName = parts[0]
+        name = parts[1]
+        className = parts[2]
+      } else if (parts.length === 2) {
+        // 格式：姓名,班级名称
+        name = parts[0]
+        accountName = name
+        className = parts[1]
+      } else {
+        // 格式：姓名
+        name = parts[0]
+        accountName = name
+        className = ''
+      }
+      
       const cls = classes.value.find(c => c.name === className)
       
       const teacherId = 'teacher_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
-      const email = `${teacherId}@teacher.local`
+      const email = `${accountName}@teacher.local`
       const password = '123456'
       
       const { data, error } = await supabase
