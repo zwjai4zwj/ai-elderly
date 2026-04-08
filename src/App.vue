@@ -1229,6 +1229,15 @@ async function loadData() {
     // 加载所有练习记录
     await loadAllRecords()
   } else if (currentUser.value.role === 'admin') {
+    // 加载班级列表
+    const { data: classesData } = await supabase
+      .from('classes')
+      .select('*')
+    
+    if (classesData) {
+      classes.value = classesData
+    }
+    
     // 加载学生列表
     const { data: studentsData } = await supabase
       .from('users')
