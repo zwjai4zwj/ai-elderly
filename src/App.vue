@@ -1099,7 +1099,7 @@ async function generateCase() {
     "livingPlace": "居住地",
     "economicType": "经济类型",
     "hobby": "爱好",
-    "studentTitle": "${caseProfile.studentTitle || '护理员'}"
+    "studentTitle": "护理员"
   },
   "medicalHistory": {
     "chiefComplaint": "主诉症状",
@@ -1112,8 +1112,10 @@ async function generateCase() {
     "concerns": ["关心的问题"],
     "communicationStyle": "沟通风格"
   },
-  "openingLine": "老人的开场白（要自然，符合老人身份和疾病情况）"
-}`
+  "openingLine": "老人的开场白（要自然，符合老人身份和疾病情况，称呼对方为护理员）"
+}
+
+重要：studentTitle必须固定为"护理员"，openingLine中必须称呼对方为"护理员"！`
 
     // 使用 Supabase Edge Function 生成病例
     const response = await fetch('https://todnsmeovkpmniqcwucm.supabase.co/functions/v1/chat', {
