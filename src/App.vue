@@ -2098,6 +2098,7 @@ async function createStudent() {
         id: studentId,
         name: newStudent.name,
         email: email,
+        class_id: newStudent.classId || null,
         class_name: classes.value.find(c => c.id === newStudent.classId)?.name || '未分配'
       })
       alert(`学生创建成功！\n账号：${email}\n密码：${password}`)
@@ -2168,6 +2169,7 @@ async function batchImportStudents() {
           id: studentId,
           name: name,
           email: email,
+          class_id: batchClassId.value,
           class_name: className
         })
         successCount++
