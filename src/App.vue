@@ -696,6 +696,76 @@
             </div>
           </div>
           
+          <!-- 老师管理 -->
+          <div class="grid gap-4 md:grid-cols-2 mt-4">
+            <!-- 创建老师 -->
+            <div class="bg-white rounded-xl p-6 shadow">
+              <h3 class="font-bold mb-4">添加老师</h3>
+              <div class="space-y-3">
+                <input 
+                  v-model="newTeacher.name" 
+                  placeholder="老师姓名"
+                  class="w-full px-3 py-2 border rounded-lg"
+                />
+                <select v-model="newTeacher.classId" class="w-full px-3 py-2 border rounded-lg">
+                  <option value="">选择管理的班级</option>
+                  <option v-for="cls in classes" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
+                </select>
+                <input 
+                  v-model="newTeacher.password" 
+                  type="text"
+                  placeholder="登录密码（默认123456）"
+                  class="w-full px-3 py-2 border rounded-lg"
+                />
+                <button 
+                  @click="createTeacher"
+                  :disabled="!newTeacher.name"
+                  class="w-full py-2 bg-purple-600 text-white rounded-lg disabled:bg-gray-400"
+                >
+                  添加老师
+                </button>
+              </div>
+              
+              <!-- 批量创建老师 -->
+              <div class="mt-4 pt-4 border-t">
+                <h4 class="font-bold mb-2 text-sm">批量创建老师</h4>
+                <textarea 
+                  v-model="batchTeachers" 
+                  placeholder="每行格式：老师姓名,班级名称&#10;例如：&#10;张老师,护理1班&#10;李老师,护理2班"
+                  class="w-full px-3 py-2 border rounded-lg h-24 text-sm"
+                ></textarea>
+                <button 
+                  @click="batchImportTeachers"
+                  :disabled="!batchTeachers.trim()"
+                  class="w-full mt-2 py-2 bg-purple-600 text-white rounded-lg disabled:bg-gray-400 text-sm"
+                >
+                  批量创建老师
+                </button>
+                <p v-if="teacherImportMsg" class="text-sm mt-1" :class="teacherImportSuccess ? 'text-green-600' : 'text-red-500'">
+                  {{ teacherImportMsg }}
+                </p>
+              </div>
+            </div>
+            
+            <!-- 老师列表 -->
+            <div class="bg-white rounded-xl p-6 shadow">
+              <h3 class="font-bold mb-4">老师列表</h3>
+              <div v-if="teachers.length === 0" class="text-gray-400 text-sm">
+                暂无老师
+              </div>
+              <div v-else class="space-y-2 max-h-60 overflow-y-auto">
+                <div v-for="teacher in teachers" :key="teacher.id" 
+                     class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                  <div>
+                    <span class="font-medium">{{ teacher.name }}</span>
+                    <span class="text-sm text-gray-400 ml-2">账号: {{ teacher.email }}</span>
+                  </div>
+                  <span class="text-sm text-gray-500">{{ teacher.class_name || '未分配班级' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
           <!-- 练习统计 -->
           <div class="bg-white rounded-xl p-6 shadow">
             <h3 class="font-bold mb-4">练习统计</h3>
@@ -800,12 +870,17 @@ const score = ref({
 // 班级和学生
 const classes = ref([])
 const students = ref([])
+const teachers = ref([])
 const newClass = reactive({ name: '' })
 const newStudent = reactive({ name: '', classId: '', password: '' })
+const newTeacher = reactive({ name: '', classId: '', password: '' })
 const batchClassId = ref('')
 const batchStudents = ref('')
+const batchTeachers = ref('')
 const batchImportMsg = ref('')
 const batchImportSuccess = ref(false)
+const teacherImportMsg = ref('')
+const teacherImportSuccess = ref(false)
 
 // 练习历史
 const practiceHistory = ref([])
@@ -887,6 +962,19 @@ async function loadData() {
       students.value = studentsData.map(s => ({
         ...s,
         class_name: s.classes?.name || '未分配'
+      }))
+    }
+    
+    // 加载老师列表
+    const { data: teachersData } = await supabase
+      .from('users')
+      .select('*, classes(name)')
+      .eq('role', 'teacher')
+    
+    if (teachersData) {
+      teachers.value = teachersData.map(t => ({
+        ...t,
+        class_name: t.classes?.name || '未分配'
       }))
     }
     
@@ -1988,6 +2076,117 @@ async function batchImportStudents() {
   } catch (err) {
     batchImportMsg.value = '导入失败：' + err.message
     batchImportSuccess.value = false
+  }
+}
+
+// 创建老师
+async function createTeacher() {
+  if (!newTeacher.name) {
+    alert('请输入老师姓名')
+    return
+  }
+  
+  const password = newTeacher.password || '123456'
+  const teacherId = 'teacher_' + Date.now()
+  const email = `${Date.now()}@teacher.local`
+  
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .insert({
+        id: teacherId,
+        name: newTeacher.name,
+        email: email,
+        role: 'teacher',
+        class_id: newTeacher.classId || null,
+        password: password
+      })
+      .select()
+    
+    if (data) {
+      const className = classes.value.find(c => c.id === newTeacher.classId)?.name || '未分配'
+      teachers.value.unshift({
+        id: teacherId,
+        name: newTeacher.name,
+        email: email,
+        class_name: className,
+        class_id: newTeacher.classId
+      })
+      alert(`老师创建成功！\n姓名：${newTeacher.name}\n账号：${email}\n密码：${password}`)
+      newTeacher.name = ''
+      newTeacher.classId = ''
+      newTeacher.password = ''
+    } else if (error) {
+      alert('创建失败：' + error.message)
+    }
+  } catch (err) {
+    alert('创建失败：' + err.message)
+  }
+}
+
+// 批量创建老师
+async function batchImportTeachers() {
+  if (!batchTeachers.value.trim()) {
+    teacherImportMsg.value = '请输入老师信息'
+    teacherImportSuccess.value = false
+    return
+  }
+  
+  const lines = batchTeachers.value.trim().split('\n').map(l => l.trim()).filter(l => l)
+  if (lines.length === 0) {
+    teacherImportMsg.value = '请输入至少一个老师信息'
+    teacherImportSuccess.value = false
+    return
+  }
+  
+  teacherImportMsg.value = '正在创建...'
+  
+  try {
+    let successCount = 0
+    
+    for (const line of lines) {
+      const parts = line.split(',').map(p => p.trim())
+      if (parts.length < 1) continue
+      
+      const name = parts[0]
+      const className = parts[1] || ''
+      const cls = classes.value.find(c => c.name === className)
+      
+      const teacherId = 'teacher_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+      const email = `${teacherId}@teacher.local`
+      const password = '123456'
+      
+      const { data, error } = await supabase
+        .from('users')
+        .insert({
+          id: teacherId,
+          name: name,
+          email: email,
+          role: 'teacher',
+          class_id: cls?.id || null,
+          password: password
+        })
+        .select()
+      
+      if (data) {
+        teachers.value.unshift({
+          id: teacherId,
+          name: name,
+          email: email,
+          class_name: className || '未分配',
+          class_id: cls?.id || null
+        })
+        successCount++
+      }
+    }
+    
+    teacherImportMsg.value = `成功创建 ${successCount} 名老师，默认密码：123456`
+    teacherImportSuccess.value = true
+    batchTeachers.value = ''
+    
+  } catch (err) {
+    teacherImportMsg.value = '创建失败：' + err.message
+    teacherImportSuccess.value = false
   }
 }
 
