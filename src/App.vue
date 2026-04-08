@@ -1301,11 +1301,20 @@ async function login() {
   isLoggingIn.value = true
   
   try {
-    // 先尝试从 users 表查询（管理员创建的学生账号）
+    // 构建完整的邮箱地址
+    let loginEmail = loginForm.username
+    
+    // 如果输入的不包含@，自动补全后缀
+    if (!loginEmail.includes('@')) {
+      // 尝试作为学生账号
+      loginEmail = `${loginForm.username}@student.local`
+    }
+    
+    // 先尝试从 users 表查询（管理员创建的账号）
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('*, classes(name)')
-      .eq('email', loginForm.username)
+      .eq('email', loginEmail)
       .eq('password', loginForm.password)
       .single()
     
@@ -1322,6 +1331,32 @@ async function login() {
       isLoggedIn.value = true
       loadData()
       return
+    }
+    
+    // 如果学生账号不存在，尝试老师账号
+    if (!loginForm.username.includes('@')) {
+      const teacherEmail = `${loginForm.username}@teacher.local`
+      const { data: teacherData } = await supabase
+        .from('users')
+        .select('*, classes(name)')
+        .eq('email', teacherEmail)
+        .eq('password', loginForm.password)
+        .single()
+      
+      if (teacherData) {
+        currentUser.value = {
+          id: teacherData.id,
+          email: teacherData.email,
+          name: teacherData.name,
+          role: teacherData.role || 'teacher',
+          class_id: teacherData.class_id,
+          class_name: teacherData.classes?.name
+        }
+        localStorage.setItem('currentUser', JSON.stringify(currentUser.value))
+        isLoggedIn.value = true
+        loadData()
+        return
+      }
     }
     
     // 尝试 Supabase Auth 登录（注册的用户）
