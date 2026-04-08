@@ -617,10 +617,23 @@
               </div>
               
               <div class="mt-4">
-                <p class="text-sm text-gray-500 mb-2">已有班级</p>
-                <div v-for="cls in classes" :key="cls.id" class="p-2 bg-gray-50 rounded mb-1 text-sm flex justify-between items-center">
-                  <span>{{ cls.name }} ({{ cls.student_count || 0 }}人)</span>
-                  <button @click="deleteClass(cls.id)" class="text-red-500 hover:text-red-700 text-xs">删除</button>
+                <p class="text-sm text-gray-500 mb-2">已有班级（点击班级名查看学生）</p>
+                <div v-for="cls in classes" :key="cls.id" class="mb-1">
+                  <div class="p-2 bg-gray-50 rounded text-sm flex justify-between items-center">
+                    <span class="cursor-pointer hover:text-blue-600 font-medium" @click="expandedClassId = expandedClassId === cls.id ? null : cls.id">
+                      {{ cls.name }} ({{ (classStudentsMap[cls.id] || []).length }}人)
+                    </span>
+                    <button @click="deleteClass(cls.id)" class="text-red-500 hover:text-red-700 text-xs">删除</button>
+                  </div>
+                  <div v-if="expandedClassId === cls.id" class="pl-4 py-2 bg-blue-50 rounded mt-1 text-xs">
+                    <div v-if="(classStudentsMap[cls.id] || []).length === 0" class="text-gray-400 py-1">暂无学生</div>
+                    <div v-else>
+                      <div v-for="s in classStudentsMap[cls.id]" :key="s.id" class="py-1 flex justify-between border-b border-gray-200 last:border-0">
+                        <span>{{ s.name }} ({{ s.email }})</span>
+                        <button @click="deleteStudent(s.id)" class="text-red-500 hover:text-red-700">删除</button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -898,6 +911,21 @@ const batchImportMsg = ref('')
 const batchImportSuccess = ref(false)
 const teacherImportMsg = ref('')
 const teacherImportSuccess = ref(false)
+
+// 班级展开状态
+const expandedClassId = ref(null)
+
+// 班级学生映射
+const classStudentsMap = computed(() => {
+  const map = {}
+  students.value.forEach(s => {
+    if (s.class_id) {
+      if (!map[s.class_id]) map[s.class_id] = []
+      map[s.class_id].push(s)
+    }
+  })
+  return map
+})
 
 // 练习历史
 const practiceHistory = ref([])
