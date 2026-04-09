@@ -104,7 +104,7 @@
           
           <!-- 中间系统名称 - 放大两倍 -->
           <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-center flex-1 mx-4 tracking-wide">
-            阳泉师专康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.34</span>
+            阳泉师专康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.35</span>
           </h1>
           
           <!-- 右侧退出按钮 -->
@@ -3136,7 +3136,7 @@ function getDimensionAdvice(classId) {
   width: 80px;
   background-image: url('/right-banner.png');
   background-size: cover; /* 自然拉伸填充 */
-  background-position: center center; /* 人物居中显示 */
+  background-position: 65% center; /* 向右偏移，确保护理员和老人完整显示 */
   background-repeat: no-repeat;
   opacity: 0.95;
   z-index: 0;
