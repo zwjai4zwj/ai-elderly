@@ -92,7 +92,7 @@
       <div class="bg-blue-600 text-white p-4">
         <div class="flex justify-between items-center max-w-4xl mx-auto">
           <div>
-            <h1 class="text-lg font-bold">康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.15</span></h1>
+            <h1 class="text-lg font-bold">康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.16</span></h1>
             <p class="text-sm text-blue-200">{{ currentUser.name }} ({{ currentUser.role === 'admin' ? '管理员' : currentUser.role === 'teacher' ? '老师' : '学生' }})</p>
           </div>
           <button @click="logout" class="text-sm bg-blue-500 px-3 py-1 rounded hover:bg-blue-400">退出</button>
@@ -1346,6 +1346,7 @@ async function login() {
   
   // 检查是否是管理员
   if (loginForm.username === 'admin' && loginForm.password === 'admin123') {
+    console.log('🔐 管理员登录中...')
     currentUser.value = { 
       id: 'admin', 
       username: 'admin', 
