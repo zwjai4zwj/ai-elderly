@@ -104,7 +104,7 @@
           
           <!-- 中间系统名称 - 放大两倍 -->
           <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-center flex-1 mx-4 tracking-wide">
-            阳泉师专康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.28</span>
+            阳泉师专康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.29</span>
           </h1>
           
           <!-- 右侧退出按钮 -->
@@ -3160,36 +3160,36 @@ function getDimensionAdvice(classId) {
   }
 }
 
-/* 平板端（769-1024px）：装饰栏宽度60px */
+/* 平板端（769-1024px）：装饰栏宽度100px */
 @media (min-width: 769px) and (max-width: 1024px) {
   .left-banner,
   .right-banner {
-    width: 60px;
+    width: 100px;
     top: 64px;
     height: calc(100vh - 64px);
   }
   
   .main-content {
-    margin-left: 70px;
-    margin-right: 70px;
+    margin-left: 110px;
+    margin-right: 110px;
     padding: 20px;
   }
 }
 
-/* 电脑端（>1024px）：装饰栏宽度80px */
+/* 电脑端（>1024px）：装饰栏宽度160px */
 @media (min-width: 1025px) {
   .left-banner,
   .right-banner {
-    width: 80px;
+    width: 160px;
   }
   
   .main-content {
-    margin-left: 90px;
-    margin-right: 90px;
+    margin-left: 170px;
+    margin-right: 170px;
     padding: 24px;
-    max-width: calc(100% - 180px);
+    max-width: calc(100% - 340px);
   }
 }
 </style>
 
-// 强制刷新版本 v3.28 - 使用用户提供的左右装饰图片
+// 强制刷新版本 v3.29 - 左右装饰栏扩大到160px
