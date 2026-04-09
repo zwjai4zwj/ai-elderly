@@ -104,7 +104,7 @@
           
           <!-- 中间系统名称 - 放大两倍 -->
           <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-center flex-1 mx-4 tracking-wide">
-            阳泉师专康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.32</span>
+            阳泉师专康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.33</span>
           </h1>
           
           <!-- 右侧退出按钮 -->
@@ -3120,10 +3120,9 @@ function getDimensionAdvice(classId) {
   height: calc(100vh - 72px);
   width: 80px;
   background-image: url('/left-banner.png');
-  background-size: contain; /* 保证完整显示，不裁剪 */
-  background-position: center center;
+  background-size: cover; /* 自然拉伸填充 */
+  background-position: center center; /* 书法字居中显示 */
   background-repeat: no-repeat;
-  background-color: #faf8f5; /* 淡雅背景色填充空白 */
   opacity: 0.95;
   z-index: 0;
 }
@@ -3136,10 +3135,9 @@ function getDimensionAdvice(classId) {
   height: calc(100vh - 72px);
   width: 80px;
   background-image: url('/right-banner.png');
-  background-size: contain; /* 保证人物完整显示 */
-  background-position: center center;
+  background-size: cover; /* 自然拉伸填充 */
+  background-position: center center; /* 人物居中显示 */
   background-repeat: no-repeat;
-  background-color: #f0fdf4; /* 淡绿背景色填充空白 */
   opacity: 0.95;
   z-index: 0;
 }
