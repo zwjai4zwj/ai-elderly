@@ -51,23 +51,22 @@
         <div v-else class="space-y-4">
           <input 
             v-model="registerForm.name" 
-            placeholder="姓名" 
+            placeholder="姓名（必填）" 
             class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <input 
             v-model="registerForm.email" 
-            type="email"
-            placeholder="邮箱" 
+            placeholder="账号（可选，默认用姓名拼音）" 
             class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <input 
             v-model="registerForm.password" 
             type="password"
-            placeholder="密码（至少6位）" 
+            placeholder="密码（至少6位，必填）" 
             class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <select v-model="registerForm.classId" class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="">选择班级</option>
+            <option value="">选择班级（可选）</option>
             <option v-for="cls in classes" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
           </select>
           <button 
@@ -104,7 +103,7 @@
           
           <!-- 中间系统名称 - 放大两倍 -->
           <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-center flex-1 mx-4 tracking-wide">
-            阳泉师专康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.37</span>
+            阳泉师专康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.38</span>
           </h1>
           
           <!-- 右侧退出按钮 -->
@@ -1625,8 +1624,8 @@ async function login() {
 async function register() {
   registerError.value = ''
   
-  if (!registerForm.name || !registerForm.email || !registerForm.password) {
-    registerError.value = '请填写完整信息'
+  if (!registerForm.name || !registerForm.password) {
+    registerError.value = '请填写姓名和密码'
     return
   }
   
@@ -1642,32 +1641,63 @@ async function register() {
       throw new Error('数据库未配置')
     }
     
-    // 创建 Supabase Auth 用户
-    const { data, error } = await supabase.auth.signUp({
-      email: registerForm.email,
-      password: registerForm.password,
-      options: {
-        data: {
-          name: registerForm.name
-        }
+    // 自动生成邮箱（用姓名拼音或时间戳）
+    let accountName = registerForm.name.toLowerCase().replace(/\s+/g, '')
+    let email = registerForm.email || `${accountName}@student.local`
+    
+    // 如果用户输入了邮箱，直接使用
+    if (registerForm.email && !registerForm.email.includes('@')) {
+      email = `${registerForm.email}@student.local`
+      accountName = registerForm.email
+    }
+    
+    // 检查账号是否已存在
+    const { data: existing } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .limit(1)
+    
+    if (existing && existing.length > 0) {
+      // 自动加数字后缀
+      let suffix = 1
+      while (true) {
+        email = `${accountName}${suffix}@student.local`
+        const { data: check } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', email)
+          .limit(1)
+        if (!check || check.length === 0) break
+        suffix++
       }
-    })
+      accountName = `${accountName}${suffix}`
+    }
+    
+    // 直接创建用户记录（简化注册，不走 Supabase Auth）
+    const userId = 'student_' + Date.now()
+    const { data, error } = await supabase
+      .from('users')
+      .insert({
+        id: userId,
+        name: registerForm.name,
+        email: email,
+        role: 'student',
+        class_id: registerForm.classId || null,
+        password: registerForm.password
+      })
+      .select()
     
     if (error) throw error
     
-    // 创建用户记录
-    if (data.user) {
-      await supabase.from('users').insert({
-        id: data.user.id,
-        name: registerForm.name,
-        email: registerForm.email,
-        role: 'student',
-        class_id: registerForm.classId || null
-      })
-      
-      alert('注册成功！请登录')
+    if (data) {
+      alert(`注册成功！\n姓名：${registerForm.name}\n账号：${accountName}\n密码：${registerForm.password}\n\n（直接输入 ${accountName} 即可登录）`)
       loginMode.value = 'password'
-      loginForm.username = registerForm.email
+      loginForm.username = accountName
+      registerForm.name = ''
+      registerForm.email = ''
+      registerForm.password = ''
+      registerForm.classId = ''
     }
     
   } catch (error) {
@@ -3173,9 +3203,10 @@ function getDimensionAdvice(classId) {
   top: 72px;
   height: calc(100vh - 72px);
   width: 80px;
-  background: 
-    url('/right-banner.png') center center / contain no-repeat,
-    linear-gradient(180deg, #f0fdf4 0%, #dcfce7 50%, #bbf7d0 100%);
+  background-image: url('/right-banner.png');
+  background-size: cover; /* 跟左侧一样，填充整个区域 */
+  background-position: center center;
+  background-repeat: no-repeat;
   opacity: 0.95;
   z-index: 0;
 }
