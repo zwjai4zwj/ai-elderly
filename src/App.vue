@@ -622,7 +622,7 @@
                   <!-- 班级整体统计 -->
                   <div class="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
                     <h4 class="font-bold text-blue-800 mb-3">📊 班级整体情况</h4>
-                    <div class="grid grid-cols-4 gap-3 text-center">
+                    <div class="grid grid-cols-5 gap-3 text-center">
                       <div class="bg-white rounded-lg p-2 shadow-sm">
                         <p class="text-2xl font-bold text-blue-600">{{ getClassStats(cls.id)?.studentCount || 0 }}</p>
                         <p class="text-xs text-gray-500">学生人数</p>
@@ -636,8 +636,12 @@
                         <p class="text-xs text-gray-500">班级平均分</p>
                       </div>
                       <div class="bg-white rounded-lg p-2 shadow-sm">
-                        <p class="text-2xl font-bold text-purple-600">{{ getClassStats(cls.id)?.highestScore || '--' }}</p>
-                        <p class="text-xs text-gray-500">最高分</p>
+                        <p class="text-xl font-bold text-purple-600">{{ getClassStats(cls.id)?.highestScore || '--' }}</p>
+                        <p class="text-xs text-gray-500">最高分（{{ getClassStats(cls.id)?.highestScoreStudent || '暂无' }}）</p>
+                      </div>
+                      <div class="bg-white rounded-lg p-2 shadow-sm">
+                        <p class="text-xl font-bold text-red-600">{{ getClassStats(cls.id)?.lowestScore || '--' }}</p>
+                        <p class="text-xs text-gray-500">最低分（{{ getClassStats(cls.id)?.lowestScoreStudent || '暂无' }}）</p>
                       </div>
                     </div>
                   </div>
@@ -763,26 +767,26 @@
               <div class="grid grid-cols-2 gap-2 mb-3">
                 <div class="bg-white rounded p-2 text-sm">
                   <span class="text-gray-500">思政维度:</span>
-                  <span class="font-bold ml-1" :class="getDimensionClass(getStudentStats(selectedStudent.id).highestRecord.dimensions?.sizheng)">
-                    {{ getStudentStats(selectedStudent.id).highestRecord.dimensions?.sizheng || '--' }}分
+                  <span class="font-bold ml-1" :class="getDimensionClass(getDimensionScore(getStudentStats(selectedStudent.id).highestRecord.dimensions, 'sizheng'))">
+                    {{ getDimensionScore(getStudentStats(selectedStudent.id).highestRecord.dimensions, 'sizheng') || '--' }}分
                   </span>
                 </div>
                 <div class="bg-white rounded p-2 text-sm">
                   <span class="text-gray-500">心理慰藉:</span>
-                  <span class="font-bold ml-1" :class="getDimensionClass(getStudentStats(selectedStudent.id).highestRecord.dimensions?.xinli)">
-                    {{ getStudentStats(selectedStudent.id).highestRecord.dimensions?.xinli || '--' }}分
+                  <span class="font-bold ml-1" :class="getDimensionClass(getDimensionScore(getStudentStats(selectedStudent.id).highestRecord.dimensions, 'xinli'))">
+                    {{ getDimensionScore(getStudentStats(selectedStudent.id).highestRecord.dimensions, 'xinli') || '--' }}分
                   </span>
                 </div>
                 <div class="bg-white rounded p-2 text-sm">
                   <span class="text-gray-500">健康宣教:</span>
-                  <span class="font-bold ml-1" :class="getDimensionClass(getStudentStats(selectedStudent.id).highestRecord.dimensions?.jiankang)">
-                    {{ getStudentStats(selectedStudent.id).highestRecord.dimensions?.jiankang || '--' }}分
+                  <span class="font-bold ml-1" :class="getDimensionClass(getDimensionScore(getStudentStats(selectedStudent.id).highestRecord.dimensions, 'jiankang'))">
+                    {{ getDimensionScore(getStudentStats(selectedStudent.id).highestRecord.dimensions, 'jiankang') || '--' }}分
                   </span>
                 </div>
                 <div class="bg-white rounded p-2 text-sm">
                   <span class="text-gray-500">康复训练:</span>
-                  <span class="font-bold ml-1" :class="getDimensionClass(getStudentStats(selectedStudent.id).highestRecord.dimensions?.kangfu)">
-                    {{ getStudentStats(selectedStudent.id).highestRecord.dimensions?.kangfu || '--' }}分
+                  <span class="font-bold ml-1" :class="getDimensionClass(getDimensionScore(getStudentStats(selectedStudent.id).highestRecord.dimensions, 'kangfu'))">
+                    {{ getDimensionScore(getStudentStats(selectedStudent.id).highestRecord.dimensions, 'kangfu') || '--' }}分
                   </span>
                 </div>
               </div>
@@ -813,19 +817,19 @@
                 <div v-if="record.dimensions" class="grid grid-cols-4 gap-1 text-xs text-center">
                   <div class="bg-white rounded p-1">
                     <p class="text-gray-400">思政</p>
-                    <p class="font-bold">{{ record.dimensions.sizheng || '--' }}</p>
+                    <p class="font-bold">{{ getDimensionScore(record.dimensions, 'sizheng') || '--' }}</p>
                   </div>
                   <div class="bg-white rounded p-1">
                     <p class="text-gray-400">心理</p>
-                    <p class="font-bold">{{ record.dimensions.xinli || '--' }}</p>
+                    <p class="font-bold">{{ getDimensionScore(record.dimensions, 'xinli') || '--' }}</p>
                   </div>
                   <div class="bg-white rounded p-1">
                     <p class="text-gray-400">健康</p>
-                    <p class="font-bold">{{ record.dimensions.jiankang || '--' }}</p>
+                    <p class="font-bold">{{ getDimensionScore(record.dimensions, 'jiankang') || '--' }}</p>
                   </div>
                   <div class="bg-white rounded p-1">
                     <p class="text-gray-400">康复</p>
-                    <p class="font-bold">{{ record.dimensions.kangfu || '--' }}</p>
+                    <p class="font-bold">{{ getDimensionScore(record.dimensions, 'kangfu') || '--' }}</p>
                   </div>
                 </div>
               </div>
@@ -2290,11 +2294,20 @@ ${chatHistory}
     // 保存评分结果到数据库
     if (currentUser.value.role === 'student' && supabase) {
       try {
+        // 将中文键名转换为英文键名
+        const dimensions = score.value.dimensions || {}
+        const normalizedDimensions = {
+          sizheng: dimensions['思政维度'] || dimensions.sizheng || 0,
+          xinli: dimensions['心理慰藉'] || dimensions.xinli || 0,
+          jiankang: dimensions['健康宣教'] || dimensions.jiankang || 0,
+          kangfu: dimensions['康复训练'] || dimensions.kangfu || 0
+        }
+        
         await supabase.from('practice_records').insert({
           user_id: currentUser.value.id,
           case_name: generatedCase.value.caseName || '练习记录',
           score: score.value.totalScore,
-          dimensions: score.value.dimensions,
+          dimensions: normalizedDimensions,
           feedback: score.value.feedback,
           case_data: generatedCase.value,
           created_at: new Date().toISOString()
@@ -2731,19 +2744,34 @@ function getClassStats(classId) {
   const classRecords = allRecords.value.filter(r => studentIds.includes(r.user_id))
   
   if (classRecords.length === 0) {
-    return { totalPractices: 0, avgScore: 0, highestScore: 0, lowestScore: 0, studentCount: classStudents.length, dimensionStats: null }
+    return { totalPractices: 0, avgScore: 0, highestScore: 0, lowestScore: 0, studentCount: classStudents.length, dimensionStats: null, highestScoreStudent: '', lowestScoreStudent: '' }
   }
   
   const scores = classRecords.map(r => r.score).filter(s => s)
+  const highestScore = scores.length ? Math.max(...scores) : 0
+  const lowestScore = scores.length ? Math.min(...scores) : 0
   
-  // 四维度统计
+  // 找到最高分和最低分的学生姓名
+  const highestRecord = classRecords.find(r => r.score === highestScore)
+  const lowestRecord = classRecords.find(r => r.score === lowestScore)
+  
+  const highestScoreStudent = highestRecord ? (classStudents.find(s => s.id === highestRecord.user_id)?.name || '未知') : ''
+  const lowestScoreStudent = lowestRecord ? (classStudents.find(s => s.id === lowestRecord.user_id)?.name || '未知') : ''
+  
+  // 四维度统计（兼容中文和英文键名）
   const dimensionStats = { sizheng: [], xinli: [], jiankang: [], kangfu: [] }
   classRecords.forEach(r => {
     if (r.dimensions) {
-      if (r.dimensions.sizheng) dimensionStats.sizheng.push(r.dimensions.sizheng)
-      if (r.dimensions.xinli) dimensionStats.xinli.push(r.dimensions.xinli)
-      if (r.dimensions.jiankang) dimensionStats.jiankang.push(r.dimensions.jiankang)
-      if (r.dimensions.kangfu) dimensionStats.kangfu.push(r.dimensions.kangfu)
+      // 兼容中文键名和英文键名
+      const sizheng = r.dimensions.sizheng || r.dimensions['思政维度']
+      const xinli = r.dimensions.xinli || r.dimensions['心理慰藉']
+      const jiankang = r.dimensions.jiankang || r.dimensions['健康宣教']
+      const kangfu = r.dimensions.kangfu || r.dimensions['康复训练']
+      
+      if (sizheng) dimensionStats.sizheng.push(sizheng)
+      if (xinli) dimensionStats.xinli.push(xinli)
+      if (jiankang) dimensionStats.jiankang.push(jiankang)
+      if (kangfu) dimensionStats.kangfu.push(kangfu)
     }
   })
   
@@ -2752,9 +2780,11 @@ function getClassStats(classId) {
   return {
     totalPractices: classRecords.length,
     avgScore: scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0,
-    highestScore: scores.length ? Math.max(...scores) : 0,
-    lowestScore: scores.length ? Math.min(...scores) : 0,
+    highestScore: highestScore,
+    lowestScore: lowestScore,
     studentCount: classStudents.length,
+    highestScoreStudent: highestScoreStudent,
+    lowestScoreStudent: lowestScoreStudent,
     dimensionStats: {
       sizheng: { avg: avgDimension(dimensionStats.sizheng), count: dimensionStats.sizheng.length },
       xinli: { avg: avgDimension(dimensionStats.xinli), count: dimensionStats.xinli.length },
@@ -2785,6 +2815,22 @@ function getScoreClass(score) {
   if (score >= 80) return 'text-green-600'
   if (score >= 60) return 'text-orange-600'
   return 'text-red-600'
+}
+
+// 获取维度分数（兼容中英文键名）
+function getDimensionScore(dimensions, key) {
+  if (!dimensions) return 0
+  const keyMap = {
+    'sizheng': ['sizheng', '思政维度'],
+    'xinli': ['xinli', '心理慰藉'],
+    'jiankang': ['jiankang', '健康宣教'],
+    'kangfu': ['kangfu', '康复训练']
+  }
+  const keys = keyMap[key] || [key]
+  for (const k of keys) {
+    if (dimensions[k] !== undefined) return dimensions[k]
+  }
+  return 0
 }
 
 // 维度分数颜色类
