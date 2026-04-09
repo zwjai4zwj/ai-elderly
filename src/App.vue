@@ -104,7 +104,7 @@
           
           <!-- 中间系统名称 - 放大两倍 -->
           <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-center flex-1 mx-4 tracking-wide">
-            阳泉师专康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.33</span>
+            阳泉师专康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.34</span>
           </h1>
           
           <!-- 右侧退出按钮 -->
@@ -3163,22 +3163,22 @@ function getDimensionAdvice(classId) {
   }
 }
 
-/* 平板端（769-1024px）：装饰栏占屏幕10% */
+/* 平板端（769-1024px）：装饰栏占屏幕12%和14% */
 @media (min-width: 769px) and (max-width: 1024px) {
   .left-banner {
-    width: 10vw;
+    width: 12vw;
     top: 64px;
     height: calc(100vh - 64px);
   }
   .right-banner {
-    width: 12vw;
+    width: 14vw;
     top: 64px;
     height: calc(100vh - 64px);
   }
   
   .main-content {
-    margin-left: calc(10vw + 10px);
-    margin-right: calc(12vw + 10px);
+    margin-left: calc(12vw + 10px);
+    margin-right: calc(14vw + 10px);
     padding: 20px;
   }
 }
@@ -3186,33 +3186,33 @@ function getDimensionAdvice(classId) {
 /* 电脑端（>1024px）：装饰栏按比例自适应 */
 @media (min-width: 1025px) {
   .left-banner {
-    width: 15vw; /* 屏幕宽度的15% */
+    width: 18vw; /* 屏幕宽度的18% */
   }
   .right-banner {
-    width: 18vw; /* 屏幕宽度的18% */
+    width: 22vw; /* 屏幕宽度的22% */
   }
   
   .main-content {
-    margin-left: calc(15vw + 10px);
-    margin-right: calc(18vw + 10px);
+    margin-left: calc(18vw + 10px);
+    margin-right: calc(22vw + 10px);
     padding: 24px;
-    max-width: calc(100% - 33vw - 20px);
+    max-width: calc(100% - 40vw - 20px);
   }
 }
 
-/* 大屏幕（>1440px）：装饰栏适当增大 */
+/* 大屏幕（>1440px）：装饰栏适当调整 */
 @media (min-width: 1441px) {
   .left-banner {
-    width: 12vw;
+    width: 15vw;
   }
   .right-banner {
-    width: 15vw;
+    width: 18vw;
   }
   
   .main-content {
-    margin-left: calc(12vw + 20px);
-    margin-right: calc(15vw + 20px);
-    max-width: calc(100% - 27vw - 40px);
+    margin-left: calc(15vw + 20px);
+    margin-right: calc(18vw + 20px);
+    max-width: calc(100% - 33vw - 40px);
   }
 }
 </style>
