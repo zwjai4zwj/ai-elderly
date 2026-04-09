@@ -102,9 +102,9 @@
             </div>
           </div>
           
-          <!-- 中间系统名称 -->
-          <h1 class="text-lg md:text-xl font-bold text-center flex-1 mx-4">
-            阳泉师专康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-1">v3.26</span>
+          <!-- 中间系统名称 - 放大两倍 -->
+          <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-center flex-1 mx-4 tracking-wide">
+            阳泉师专康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.27</span>
           </h1>
           
           <!-- 右侧退出按钮 -->
@@ -114,8 +114,8 @@
         </div>
       </div>
       
-      <!-- 内容区域 -->
-      <div class="max-w-4xl mx-auto p-4">
+      <!-- 内容区域 - 左右留白给固定侧边栏 -->
+      <div class="max-w-4xl mx-auto p-4 md:ml-[130px] md:mr-[180px] lg:ml-[140px] lg:mr-[200px]">
         <!-- 学生首页 -->
         <div v-if="currentUser.role === 'student'">
           <!-- 步骤指示器 -->
@@ -127,6 +127,7 @@
                 <div class="slogan-vertical">
                   <p class="slogan-main">老吾老</p>
                   <p class="slogan-main">及人之老</p>
+                  <p class="slogan-source">出自《孟子·梁惠王上》</p>
                 </div>
               </div>
               <div class="slogan-mobile">
@@ -138,7 +139,7 @@
               <!-- 护理场景图片 - 电脑端右侧 -->
               <div class="care-photo-pc">
                 <img 
-                  src="https://s.coze.cn/image/ypihf0-1Rfk/" 
+                  src="https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?w=400&h=800&fit=crop" 
                   alt="温馨护理场景"
                   class="care-photo-img"
                 />
@@ -150,7 +151,7 @@
               <!-- 手机端护理照片（可选显示） -->
               <div class="care-photo-mobile">
                 <img 
-                  src="https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?w=300&h=150&fit=crop" 
+                  src="https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?w=400&h=200&fit=crop" 
                   alt="温馨护理场景"
                   class="care-photo-img"
                 />
@@ -3141,7 +3142,8 @@ function getDimensionAdvice(classId) {
 </script>
 
 <style>
-/* v3.26 毛笔字体 · 中国风设计 · 思政标语优化 */
+/* v3.27 毛笔字体 · 中国风设计 · 思政标语优化 · 左右两侧布局 */
+/* 左侧：花草背景+书法字 | 右侧：护理员推轮椅老人温馨照片 */
 
 /* 引入 Google Fonts 毛笔字体 */
 @import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap');
@@ -3166,22 +3168,35 @@ function getDimensionAdvice(classId) {
   text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 }
 
+/* ===== 顶部导航高度常量 ===== */
+/* 导航条高度约 64-72px，固定定位在顶部 */
+
 /* ===== 电脑端布局 (宽度 > 768px) ===== */
 @media (min-width: 769px) {
-  /* 思政标语 - 电脑端固定在左侧 */
+  /* 思政标语 - 电脑端固定在左侧，导航条下方 */
   .slogan-pc {
     position: fixed;
     left: 0;
-    top: 0;
-    height: 100vh;
-    width: 100px;
+    top: 72px; /* 导航条下方 */
+    height: calc(100vh - 72px);
+    width: 120px;
     z-index: 10;
     display: flex;
     justify-content: center;
     align-items: center;
-    /* 米白色中国风背景 */
-    background: linear-gradient(180deg, #faf8f5 0%, #f5f0e8 50%, #faf8f5 100%);
+    /* 花草花园背景 - 参考图风格 */
+    background: linear-gradient(180deg, 
+      #fce7f3 0%,   /* 浅粉顶部 */
+      #fdf2f8 20%,  /* 粉色渐变 */
+      #f0fdf4 40%,  /* 渐变到绿色 */
+      #dcfce7 60%,  /* 浅绿中部 */
+      #bbf7d0 80%,  /* 绿色下部 */
+      #86efac 100%  /* 深绿底部 */
+    );
+    /* 添加花草装饰效果 */
+    background-size: 100% 100%;
     box-shadow: inset -4px 0 20px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
   }
   
   /* 思政标语容器 */
@@ -3190,7 +3205,8 @@ function getDimensionAdvice(classId) {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
+    padding: 20px 10px;
   }
   
   .slogan-vertical .slogan-main {
@@ -3198,24 +3214,38 @@ function getDimensionAdvice(classId) {
     text-orientation: upright;
   }
   
+  /* 右侧标注 - 孟子出处 */
+  .slogan-source {
+    font-family: 'Ma Shan Zheng', 'STXingkai', 'KaiTi', serif;
+    font-size: 0.85rem;
+    color: rgba(0, 0, 0, 0.5);
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    letter-spacing: 0.1em;
+    margin-top: 16px;
+  }
+  
   /* 手机端标语 - 电脑端隐藏 */
   .slogan-mobile {
     display: none;
   }
   
-  /* 护理照片 - 电脑端固定在右侧，竖图全高 */
+  /* 护理照片 - 电脑端固定在右侧，导航条下方，竖图全高 */
   .care-photo-pc {
     position: fixed;
     right: 0;
-    top: 0;
-    width: 30%;
-    max-width: 360px;
-    height: 100vh;
+    top: 72px; /* 导航条下方 */
+    width: 160px; /* 固定宽度 */
+    height: calc(100vh - 72px);
     z-index: 10;
     display: block;
-    /* 自然暖色调背景 */
-    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-    border-radius: 16px 0 0 16px;
+    /* 自然暖色调背景 - 参考图风格 */
+    background: linear-gradient(135deg, 
+      #d1fae5 0%,   /* 浅绿 */
+      #a7f3d0 30%,  /* 绿色 */
+      #86efac 60%,  /* 翠绿 */
+      #6ee7b7 100%  /* 深绿 */
+    );
     overflow: hidden;
     box-shadow: -4px 0 20px rgba(0, 0, 0, 0.08);
   }
@@ -3225,7 +3255,6 @@ function getDimensionAdvice(classId) {
     height: 100%;
     object-fit: cover;
     object-position: center;
-    border-radius: 16px 0 0 16px;
   }
   
   .care-photo-badge {
@@ -3309,12 +3338,15 @@ function getDimensionAdvice(classId) {
   }
   
   .slogan-pc {
-    width: 80px;
+    width: 90px;
+    top: 64px;
+    height: calc(100vh - 64px);
   }
   
   .care-photo-pc {
-    width: 26%;
-    max-width: 280px;
+    width: 130px;
+    top: 64px;
+    height: calc(100vh - 64px);
   }
 }
 
@@ -3326,13 +3358,13 @@ function getDimensionAdvice(classId) {
   }
   
   .slogan-pc {
-    width: 110px;
+    width: 130px;
   }
   
   .care-photo-pc {
-    max-width: 400px;
+    width: 180px;
   }
 }
 </style>
 
-// 强制刷新版本 v3.26 - 毛笔字体 · 中国风设计 · 思政标语优化
+// 强制刷新版本 v3.27 - 左侧花草背景+书法字 | 右侧护理员推轮椅老人温馨照片
