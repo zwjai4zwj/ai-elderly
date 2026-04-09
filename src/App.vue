@@ -1,9 +1,14 @@
 <template>
   <div class="min-h-screen bg-gray-50">
+    <!-- 急救警报音频 -->
+    <audio ref="alarmAudio" preload="auto">
+      <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+    </audio>
+    
     <!-- 登录页面 -->
     <div v-if="!isLoggedIn" class="flex items-center justify-center min-h-screen p-4">
       <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-6">
-        <h1 class="text-2xl font-bold text-center text-blue-600 mb-2">阳泉师专康养AI实训系统</h1>
+        <h1 class="text-2xl font-bold text-center text-blue-600 mb-2">阳泉师专医康养AI实训系统</h1>
         <p class="text-gray-500 text-center mb-6">康养系 · 智能养老护理实训平台</p>
         
         <!-- 登录方式选择 -->
@@ -103,7 +108,7 @@
           
           <!-- 中间系统名称 - 放大两倍 -->
           <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-center flex-1 mx-4 tracking-wide">
-            阳泉师专康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.38</span>
+            阳泉师专医康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.39</span>
           </h1>
           
           <!-- 右侧退出按钮 -->
@@ -447,7 +452,7 @@
                 </div>
                 
                 <!-- 智能设备报警 -->
-                <div v-if="generatedCase.deviceAlert" class="bg-red-50 rounded-lg p-4 border-2 border-red-300">
+                <div v-if="generatedCase.deviceAlert" class="bg-red-50 rounded-lg p-4 border-2 border-red-300 alarm-blink">
                   <h4 class="font-medium text-red-700 mb-2">🚨 智能设备报警</h4>
                   <p class="text-sm text-red-600 font-medium">{{ generatedCase.deviceAlert }}</p>
                 </div>
@@ -511,7 +516,7 @@
                   </div>
                   
                   <!-- 智能设备报警 -->
-                  <div v-if="generatedCase.deviceAlert" class="bg-red-50 rounded-lg p-2 border border-red-300">
+                  <div v-if="generatedCase.deviceAlert" class="bg-red-50 rounded-lg p-2 border border-red-300 alarm-blink">
                     <p class="font-medium text-red-700 text-xs">🚨 设备报警</p>
                     <p class="text-red-600 text-xs">{{ generatedCase.deviceAlert }}</p>
                   </div>
@@ -1217,6 +1222,29 @@ const isRegistering = ref(false)
 const loginError = ref('')
 const registerError = ref('')
 
+// 急救警报音频控制
+const alarmAudio = ref(null)
+const isAlarmPlaying = ref(false)
+
+// 播放警报
+function playAlarm() {
+  if (alarmAudio.value) {
+    alarmAudio.value.currentTime = 0
+    alarmAudio.value.loop = true
+    alarmAudio.value.play().catch(e => console.log('音频播放失败:', e))
+    isAlarmPlaying.value = true
+  }
+}
+
+// 停止警报
+function stopAlarm() {
+  if (alarmAudio.value) {
+    alarmAudio.value.pause()
+    alarmAudio.value.currentTime = 0
+    isAlarmPlaying.value = false
+  }
+}
+
 const loginForm = reactive({
   username: '',
   password: ''
@@ -1841,6 +1869,10 @@ ${currentEmergency ? `- 突发事件：${currentEmergency}` : ''}
     if (jsonMatch) {
       generatedCase.value = JSON.parse(jsonMatch[0])
       currentStep.value = 'case'
+      // 如果有突发事件，播放警报
+      if (currentEmergency) {
+        playAlarm()
+      }
     } else {
       throw new Error('解析失败')
     }
@@ -1883,6 +1915,10 @@ ${currentEmergency ? `- 突发事件：${currentEmergency}` : ''}
       openingLine: currentEmergency ? `护理员，我好像${currentEmergency}了，快来帮帮我！` : `护理员，我最近总是头晕，你帮我看看吧。`
     }
     currentStep.value = 'case'
+    // 如果有突发事件，播放警报
+    if (currentEmergency) {
+      playAlarm()
+    }
   } finally {
     isGenerating.value = false
   }
@@ -1890,6 +1926,8 @@ ${currentEmergency ? `- 突发事件：${currentEmergency}` : ''}
 
 // 开始对话
 function startChat() {
+  // 进入交流界面后停止警报
+  stopAlarm()
   messages.value = [
     { role: 'assistant', content: generatedCase.value.openingLine || '你好，护理员。' }
   ]
@@ -3179,6 +3217,22 @@ function getDimensionAdvice(classId) {
 
 <style>
 /* v3.28 使用用户提供的左右装饰图片进行布局优化 */
+
+/* ===== 闪烁动画 ===== */
+@keyframes alarmBlink {
+  0%, 100% {
+    background-color: #fef2f2; /* red-50 */
+    border-color: #fca5a5; /* red-300 */
+  }
+  50% {
+    background-color: #fee2e2; /* red-100 */
+    border-color: #ef4444; /* red-500 */
+  }
+}
+
+.alarm-blink {
+  animation: alarmBlink 1s ease-in-out infinite;
+}
 /* 左侧：花草+书法字 | 右侧：护理员推轮椅老人 */
 
 /* ===== 左侧装饰栏 ===== */
