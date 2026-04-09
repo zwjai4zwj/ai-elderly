@@ -92,7 +92,7 @@
       <div class="bg-blue-600 text-white p-4">
         <div class="flex justify-between items-center max-w-4xl mx-auto">
           <div>
-            <h1 class="text-lg font-bold">康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.17</span></h1>
+            <h1 class="text-lg font-bold">康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.18</span></h1>
             <p class="text-sm text-blue-200">{{ currentUser.name }} ({{ currentUser.role === 'admin' ? '管理员' : currentUser.role === 'teacher' ? '老师' : '学生' }})</p>
           </div>
           <button @click="logout" class="text-sm bg-blue-500 px-3 py-1 rounded hover:bg-blue-400">退出</button>
@@ -1266,24 +1266,26 @@ async function loadData() {
     if (data) practiceHistory.value = data
   } else if (currentUser.value.role === 'teacher') {
     // 老师需要加载：学生列表、班级列表、所有练习记录
+    const { data: classesData } = await supabase
+      .from('classes')
+      .select('*')
+    
+    const classMap = {}
+    if (classesData) {
+      classes.value = classesData
+      classesData.forEach(c => { classMap[c.id] = c.name })
+    }
+    
     const { data: studentsData } = await supabase
       .from('users')
-      .select('*, classes(name)')
+      .select('*')
       .eq('role', 'student')
     
     if (studentsData) {
       students.value = studentsData.map(s => ({
         ...s,
-        class_name: s.classes?.name || '未分配'
+        class_name: classMap[s.class_id] || '未分配'
       }))
-    }
-    
-    const { data: classesData } = await supabase
-      .from('classes')
-      .select('*')
-    
-    if (classesData) {
-      classes.value = classesData
     }
     
     // 加载所有练习记录
@@ -1296,15 +1298,17 @@ async function loadData() {
       .from('classes')
       .select('*')
     
+    const classMap = {}
     if (classesData) {
       classes.value = classesData
+      classesData.forEach(c => { classMap[c.id] = c.name })
       console.log('✅ 班级数量:', classesData.length)
     }
     
-    // 加载学生列表
+    // 加载学生列表（简化查询，不用join）
     const { data: studentsData, error: studentError } = await supabase
       .from('users')
-      .select('*, classes(name)')
+      .select('*')
       .eq('role', 'student')
     
     if (studentError) {
@@ -1312,15 +1316,15 @@ async function loadData() {
     } else if (studentsData) {
       students.value = studentsData.map(s => ({
         ...s,
-        class_name: s.classes?.name || '未分配'
+        class_name: classMap[s.class_id] || '未分配'
       }))
       console.log('✅ 学生数量:', studentsData.length, studentsData.map(s => s.name).join(', '))
     }
     
-    // 加载老师列表
+    // 加载老师列表（简化查询，不用join）
     const { data: teachersData, error: teacherError } = await supabase
       .from('users')
-      .select('*, classes(name)')
+      .select('*')
       .eq('role', 'teacher')
     
     if (teacherError) {
@@ -1328,7 +1332,7 @@ async function loadData() {
     } else if (teachersData) {
       teachers.value = teachersData.map(t => ({
         ...t,
-        class_name: t.classes?.name || '未分配'
+        class_name: classMap[t.class_id] || '未分配'
       }))
       console.log('✅ 教师数量:', teachersData.length, teachersData.map(t => t.name).join(', '))
     }
