@@ -92,7 +92,7 @@
       <div class="bg-blue-600 text-white p-4">
         <div class="flex justify-between items-center max-w-4xl mx-auto">
           <div>
-            <h1 class="text-lg font-bold">康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.19</span></h1>
+            <h1 class="text-lg font-bold">康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.20</span></h1>
             <p class="text-sm text-blue-200">{{ currentUser.name }} ({{ currentUser.role === 'admin' ? '管理员' : currentUser.role === 'teacher' ? '老师' : '学生' }})</p>
           </div>
           <button @click="logout" class="text-sm bg-blue-500 px-3 py-1 rounded hover:bg-blue-400">退出</button>
@@ -553,14 +553,44 @@
             <div class="bg-white rounded-xl p-6 shadow">
               <h3 class="font-bold mb-4">各维度得分</h3>
               <div class="space-y-4">
-                <div v-for="(value, key) in score.dimensions" :key="key">
+                <div>
                   <div class="flex justify-between mb-1">
-                    <span>{{ key }}</span>
-                    <span class="font-medium">{{ value }}/25</span>
+                    <span>思政维度</span>
+                    <span class="font-medium">{{ score.dimensions?.思政维度 || score.dimensions?.sizheng || 0 }}/25</span>
                   </div>
                   <div class="bg-gray-200 rounded-full h-3">
                     <div class="bg-blue-600 h-3 rounded-full transition-all duration-500" 
-                         :style="{ width: (value / 25 * 100) + '%' }"></div>
+                         :style="{ width: ((score.dimensions?.思政维度 || score.dimensions?.sizheng || 0) / 25 * 100) + '%' }"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between mb-1">
+                    <span>心理慰藉</span>
+                    <span class="font-medium">{{ score.dimensions?.心理慰藉 || score.dimensions?.xinli || 0 }}/25</span>
+                  </div>
+                  <div class="bg-gray-200 rounded-full h-3">
+                    <div class="bg-green-600 h-3 rounded-full transition-all duration-500" 
+                         :style="{ width: ((score.dimensions?.心理慰藉 || score.dimensions?.xinli || 0) / 25 * 100) + '%' }"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between mb-1">
+                    <span>健康宣教</span>
+                    <span class="font-medium">{{ score.dimensions?.健康宣教 || score.dimensions?.jiankang || 0 }}/25</span>
+                  </div>
+                  <div class="bg-gray-200 rounded-full h-3">
+                    <div class="bg-orange-600 h-3 rounded-full transition-all duration-500" 
+                         :style="{ width: ((score.dimensions?.健康宣教 || score.dimensions?.jiankang || 0) / 25 * 100) + '%' }"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between mb-1">
+                    <span>康复训练</span>
+                    <span class="font-medium">{{ score.dimensions?.康复训练 || score.dimensions?.kangfu || 0 }}/25</span>
+                  </div>
+                  <div class="bg-gray-200 rounded-full h-3">
+                    <div class="bg-purple-600 h-3 rounded-full transition-all duration-500" 
+                         :style="{ width: ((score.dimensions?.康复训练 || score.dimensions?.kangfu || 0) / 25 * 100) + '%' }"></div>
                   </div>
                 </div>
               </div>
