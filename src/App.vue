@@ -1229,9 +1229,18 @@ onMounted(async () => {
   // 检查本地存储的登录状态
   const savedUser = localStorage.getItem('currentUser')
   if (savedUser) {
-    currentUser.value = JSON.parse(savedUser)
-    isLoggedIn.value = true
-    loadData()
+    try {
+      const parsed = JSON.parse(savedUser)
+      if (parsed && parsed.id && parsed.role) {
+        currentUser.value = parsed
+        isLoggedIn.value = true
+        console.log('✅ 已恢复登录状态:', parsed.name, parsed.role)
+        loadData()
+      }
+    } catch (e) {
+      console.error('解析登录状态失败:', e)
+      localStorage.removeItem('currentUser')
+    }
   }
   
   // 加载班级列表
@@ -1280,6 +1289,8 @@ async function loadData() {
     // 加载所有练习记录
     await loadAllRecords()
   } else if (currentUser.value.role === 'admin') {
+    console.log('📋 管理员加载数据...')
+    
     // 加载班级列表
     const { data: classesData } = await supabase
       .from('classes')
@@ -1287,6 +1298,7 @@ async function loadData() {
     
     if (classesData) {
       classes.value = classesData
+      console.log('✅ 班级数量:', classesData.length)
     }
     
     // 加载学生列表
@@ -1300,6 +1312,7 @@ async function loadData() {
         ...s,
         class_name: s.classes?.name || '未分配'
       }))
+      console.log('✅ 学生数量:', studentsData.length)
     }
     
     // 加载老师列表
@@ -1313,6 +1326,7 @@ async function loadData() {
         ...t,
         class_name: t.classes?.name || '未分配'
       }))
+      console.log('✅ 教师数量:', teachersData.length)
     }
     
     // 加载统计
