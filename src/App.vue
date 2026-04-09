@@ -104,7 +104,7 @@
           
           <!-- 中间系统名称 - 放大两倍 -->
           <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-center flex-1 mx-4 tracking-wide">
-            阳泉师专康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.35</span>
+            阳泉师专康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.36</span>
           </h1>
           
           <!-- 右侧退出按钮 -->
@@ -2608,20 +2608,34 @@ async function createStudent() {
   
   const password = newStudent.password || '123456'
   // 使用姓名拼音作为账号（用户需要输入拼音账号）
-  const accountName = newStudent.accountName || newStudent.name
-  const email = `${accountName}@student.local`
+  let accountName = newStudent.accountName || newStudent.name
   
   try {
+    // 自动生成邮箱
+    let email = `${accountName}@student.local`
+    
     // 检查账号是否已存在
-    const { data: existing } = await supabase
+    let { data: existing } = await supabase
       .from('users')
-      .select('id')
+      .select('id, name')
       .eq('email', email)
       .limit(1)
     
+    // 如果重名，自动加数字后缀
     if (existing && existing.length > 0) {
-      alert(`账号已存在：${email}\n请更换账号名！`)
-      return
+      let suffix = 1
+      while (true) {
+        email = `${accountName}${suffix}@student.local`
+        const { data: check } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', email)
+          .limit(1)
+        
+        if (!check || check.length === 0) break
+        suffix++
+      }
+      accountName = `${accountName}${suffix}`
     }
     
     const studentId = 'student_' + Date.now()
@@ -2645,7 +2659,7 @@ async function createStudent() {
         class_id: newStudent.classId || null,
         class_name: classes.value.find(c => c.id === newStudent.classId)?.name || '未分配'
       })
-      alert(`学生创建成功！\n账号：${email}\n密码：${password}`)
+      alert(`学生创建成功！\n姓名：${newStudent.name}\n账号：${accountName}\n密码：${password}\n\n（直接输入 ${accountName} 即可登录）`)
       newStudent.name = ''
       newStudent.accountName = ''
       newStudent.classId = ''
@@ -2763,11 +2777,36 @@ async function createTeacher() {
   }
   
   const password = newTeacher.password || '123456'
-  const teacherId = 'teacher_' + Date.now()
-  const accountName = newTeacher.accountName || newTeacher.name
-  const email = `${accountName}@teacher.local`
+  let accountName = newTeacher.accountName || newTeacher.name
+  let email = `${accountName}@teacher.local`
   
   try {
+    // 检查账号是否已存在
+    let { data: existing } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .limit(1)
+    
+    // 如果重名，自动加数字后缀
+    if (existing && existing.length > 0) {
+      let suffix = 1
+      while (true) {
+        email = `${accountName}${suffix}@teacher.local`
+        const { data: check } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', email)
+          .limit(1)
+        
+        if (!check || check.length === 0) break
+        suffix++
+      }
+      accountName = `${accountName}${suffix}`
+    }
+    
+    const teacherId = 'teacher_' + Date.now()
+    
     const { data, error } = await supabase
       .from('users')
       .insert({
@@ -2789,7 +2828,7 @@ async function createTeacher() {
         class_name: className,
         class_id: newTeacher.classId
       })
-      alert(`老师创建成功！\n姓名：${newTeacher.name}\n账号：${email}\n密码：${password}`)
+      alert(`老师创建成功！\n姓名：${newTeacher.name}\n账号：${accountName}\n密码：${password}\n\n（直接输入 ${accountName} 即可登录）`)
       newTeacher.name = ''
       newTeacher.accountName = ''
       newTeacher.classId = ''
