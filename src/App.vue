@@ -3,8 +3,8 @@
     <!-- 登录页面 -->
     <div v-if="!isLoggedIn" class="flex items-center justify-center min-h-screen p-4">
       <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-6">
-        <h1 class="text-2xl font-bold text-center text-blue-600 mb-6">康养AI实训系统</h1>
-        <p class="text-gray-500 text-center mb-6">阳泉师专康养系</p>
+        <h1 class="text-2xl font-bold text-center text-blue-600 mb-2">阳泉师专康养AI实训系统</h1>
+        <p class="text-gray-500 text-center mb-6">康养系 · 智能养老护理实训平台</p>
         
         <!-- 登录方式选择 -->
         <div class="flex mb-4 bg-gray-100 rounded-lg p-1">
@@ -92,7 +92,7 @@
       <div class="bg-blue-600 text-white p-4">
         <div class="flex justify-between items-center max-w-4xl mx-auto">
           <div>
-            <h1 class="text-lg font-bold">康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.24</span></h1>
+            <h1 class="text-lg font-bold">阳泉师专康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.25</span></h1>
             <p class="text-sm text-blue-200">{{ currentUser.name }} ({{ currentUser.role === 'admin' ? '管理员' : currentUser.role === 'teacher' ? '老师' : '学生' }})</p>
           </div>
           <button @click="logout" class="text-sm bg-blue-500 px-3 py-1 rounded hover:bg-blue-400">退出</button>
@@ -110,34 +110,34 @@
               <!-- 思政标语 - 电脑端左侧纵向，手机端顶部横向 -->
               <div class="slogan-pc">
                 <div class="slogan-vertical">
-                  <p class="text-2xl font-bold text-red-600" style="font-family: 'KaiTi', 'STKaiti', 'STXingkai', serif;">老吾老</p>
-                  <p class="text-2xl font-bold text-red-600" style="font-family: 'KaiTi', 'STKaiti', 'STXingkai', serif;">及人之老</p>
+                  <p class="slogan-text">老吾老</p>
+                  <p class="slogan-text">及人之老</p>
                 </div>
               </div>
               <div class="slogan-mobile">
-                <div class="bg-gradient-to-r from-red-50 to-pink-50 rounded-xl px-4 py-2 shadow text-center">
-                  <p class="text-lg font-bold text-red-600" style="font-family: 'KaiTi', 'STKaiti', 'STXingkai', serif;">老吾老 · 及人之老</p>
+                <div class="bg-gradient-to-r from-rose-50 via-pink-50 to-red-50 rounded-xl px-4 py-2 shadow text-center border border-rose-100">
+                  <p class="slogan-text-mobile">老吾老 · 及人之老</p>
                 </div>
               </div>
               
               <!-- 护理场景图片 - 电脑端右侧 -->
               <div class="care-photo-pc">
                 <img 
-                  src="https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?w=400&h=300&fit=crop" 
-                  alt="护理关怀"
-                  class="w-full h-full object-cover rounded-xl shadow"
+                  src="https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?w=500&h=400&fit=crop" 
+                  alt="温馨护理场景"
+                  class="care-photo-img"
                 />
-                <div class="absolute bottom-2 right-3 text-xs text-green-700 bg-white/70 px-2 py-1 rounded">
-                  🌤️ 沐浴阳光 温馨陪伴
+                <div class="care-photo-badge">
+                  🌤️ 阳光康养 暖心相伴
                 </div>
               </div>
               
               <!-- 手机端护理照片（可选显示） -->
               <div class="care-photo-mobile">
                 <img 
-                  src="https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?w=200&h=120&fit=crop" 
-                  alt="护理关怀"
-                  class="w-full h-full object-cover rounded-xl shadow"
+                  src="https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?w=300&h=150&fit=crop" 
+                  alt="温馨护理场景"
+                  class="care-photo-img"
                 />
               </div>
             </div>
@@ -3126,7 +3126,27 @@ function getDimensionAdvice(classId) {
 </script>
 
 <style>
-/* v3.24 响应式布局样式 */
+/* v3.25 毛笔字体 · 中国风设计 · 思政标语优化 */
+
+/* 引入 Google Fonts 毛笔字体 */
+@import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap');
+
+/* ===== 毛笔字体类 ===== */
+.slogan-text {
+  font-family: 'Ma Shan Zheng', 'STXingkai', 'KaiTi', serif;
+  font-size: 3.5rem;
+  color: #c41e3a;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+  letter-spacing: 0.3em;
+  line-height: 1.4;
+}
+
+.slogan-text-mobile {
+  font-family: 'Ma Shan Zheng', 'STXingkai', 'KaiTi', serif;
+  font-size: 1.5rem;
+  color: #b91c1c;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
 
 /* ===== 电脑端布局 (宽度 > 768px) ===== */
 @media (min-width: 769px) {
@@ -3134,27 +3154,31 @@ function getDimensionAdvice(classId) {
   .slogan-pc {
     position: fixed;
     left: 0;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 0;
+    height: 100vh;
+    width: 100px;
     z-index: 10;
     display: flex;
     justify-content: center;
     align-items: center;
+    /* 中国风渐变背景 - 淡雅暖色调 */
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe4e1 50%, #fff0f0 100%);
+    /* 添加淡淡的水墨竹叶纹理效果 */
+    box-shadow: inset -4px 0 20px rgba(196, 30, 58, 0.05);
   }
   
+  /* 思政标语容器 */
   .slogan-vertical {
-    background: linear-gradient(to bottom, #fef2f2, #fce7f3);
-    border-radius: 0 12px 12px 0;
-    padding: 20px 15px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .slogan-vertical .slogan-text {
     writing-mode: vertical-rl;
     text-orientation: upright;
-    letter-spacing: 8px;
-  }
-  
-  .slogan-vertical p {
-    font-size: 1.5rem;
-    margin: 8px 0;
   }
   
   /* 手机端标语 - 电脑端隐藏 */
@@ -3168,16 +3192,38 @@ function getDimensionAdvice(classId) {
     right: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: 33%;
-    max-width: 400px;
-    height: 200px;
+    width: 32%;
+    max-width: 380px;
+    height: 210px;
     z-index: 10;
     display: block;
+    /* 自然色调背景，与左侧呼应 */
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-radius: 16px 0 0 16px;
+    overflow: hidden;
+    box-shadow: -4px 4px 20px rgba(0, 0, 0, 0.1);
   }
   
-  .care-photo-pc img {
-    border-radius: 12px 0 0 12px;
-    box-shadow: -4px 4px 12px rgba(0, 0, 0, 0.1);
+  .care-photo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 16px 0 0 16px;
+  }
+  
+  .care-photo-badge {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    color: #166534;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(22, 101, 52, 0.1);
   }
   
   /* 手机端照片 - 电脑端隐藏 */
@@ -3223,34 +3269,53 @@ function getDimensionAdvice(classId) {
     display: block;
     width: 100%;
     height: 120px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .care-photo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
   }
 }
 
 /* ===== 平板端优化 (769px - 1024px) ===== */
 @media (min-width: 769px) and (max-width: 1024px) {
-  .slogan-vertical p {
-    font-size: 1.25rem;
+  .slogan-text {
+    font-size: 2.5rem;
+    letter-spacing: 0.25em;
+  }
+  
+  .slogan-pc {
+    width: 80px;
   }
   
   .care-photo-pc {
-    width: 30%;
+    width: 28%;
     max-width: 300px;
-    height: 180px;
+    height: 190px;
   }
 }
 
 /* ===== 大屏幕优化 (> 1024px) ===== */
 @media (min-width: 1025px) {
-  .slogan-vertical p {
-    font-size: 1.75rem;
-    letter-spacing: 12px;
+  .slogan-text {
+    font-size: 4rem;
+    letter-spacing: 0.35em;
+  }
+  
+  .slogan-pc {
+    width: 120px;
   }
   
   .care-photo-pc {
-    max-width: 450px;
-    height: 220px;
+    max-width: 420px;
+    height: 230px;
   }
 }
 </style>
 
-// 强制刷新版本 v3.24 - 思政标语响应式布局 + 真人护理照片
+// 强制刷新版本 v3.25 - 毛笔字体 · 中国风设计 · 思政标语优化
