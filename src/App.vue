@@ -104,7 +104,7 @@
           
           <!-- 中间系统名称 - 放大两倍 -->
           <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-center flex-1 mx-4 tracking-wide">
-            阳泉师专康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.29</span>
+            阳泉师专康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.30</span>
           </h1>
           
           <!-- 右侧退出按钮 -->
@@ -3176,18 +3176,18 @@ function getDimensionAdvice(classId) {
   }
 }
 
-/* 电脑端（>1024px）：装饰栏宽度160px */
+/* 电脑端（>1024px）：装饰栏宽度320px */
 @media (min-width: 1025px) {
   .left-banner,
   .right-banner {
-    width: 160px;
+    width: 320px;
   }
   
   .main-content {
-    margin-left: 170px;
-    margin-right: 170px;
+    margin-left: 330px;
+    margin-right: 330px;
     padding: 24px;
-    max-width: calc(100% - 340px);
+    max-width: calc(100% - 660px);
   }
 }
 </style>
