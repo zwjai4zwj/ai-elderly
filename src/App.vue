@@ -31,6 +31,30 @@
         
         <!-- 账号密码登录 -->
         <div v-if="loginMode === 'password'" class="space-y-4">
+          <!-- 角色选择 -->
+          <div class="flex gap-2 bg-gray-100 rounded-lg p-1">
+            <button 
+              @click="loginForm.role = 'student'"
+              :class="loginForm.role === 'student' ? 'bg-white shadow text-blue-600' : 'text-gray-500'"
+              class="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
+            >
+              学生
+            </button>
+            <button 
+              @click="loginForm.role = 'teacher'"
+              :class="loginForm.role === 'teacher' ? 'bg-white shadow text-blue-600' : 'text-gray-500'"
+              class="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
+            >
+              教师
+            </button>
+            <button 
+              @click="loginForm.role = 'admin'"
+              :class="loginForm.role === 'admin' ? 'bg-white shadow text-blue-600' : 'text-gray-500'"
+              class="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
+            >
+              管理员
+            </button>
+          </div>
           <input 
             v-model="loginForm.username" 
             placeholder="账号" 
@@ -85,7 +109,7 @@
         </div>
         
         <p class="text-center text-gray-400 text-sm mt-4">
-          默认管理员：admin / admin123
+          管理员账号：admin / admin123（选择"管理员"登录）
         </p>
       </div>
     </div>
@@ -108,7 +132,7 @@
           
           <!-- 中间系统名称 - 放大两倍 -->
           <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-center flex-1 mx-4 tracking-wide">
-            阳泉师专医康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.39</span>
+            阳泉师专医康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.40</span>
           </h1>
           
           <!-- 右侧退出按钮 -->
@@ -1247,7 +1271,8 @@ function stopAlarm() {
 
 const loginForm = reactive({
   username: '',
-  password: ''
+  password: '',
+  role: 'student' // 默认学生
 })
 
 const registerForm = reactive({
@@ -1551,13 +1576,19 @@ async function login() {
     // 构建完整的邮箱地址
     let loginEmail = loginForm.username
     
-    // 如果输入的不包含@，自动补全后缀
+    // 如果输入的不包含@，根据角色自动补全后缀
     if (!loginEmail.includes('@')) {
-      // 尝试作为学生账号
-      loginEmail = `${loginForm.username}@student.local`
+      if (loginForm.role === 'teacher') {
+        loginEmail = `${loginForm.username}@teacher.local`
+      } else if (loginForm.role === 'admin') {
+        // 管理员直接用用户名
+        loginEmail = `${loginForm.username}@system`
+      } else {
+        loginEmail = `${loginForm.username}@student.local`
+      }
     }
     
-    // 先尝试从 users 表查询（管理员创建的账号）
+    // 从 users 表查询
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('*, classes(name)')
@@ -1571,7 +1602,7 @@ async function login() {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role || 'student',
+        role: user.role || loginForm.role,
         class_id: user.class_id,
         class_name: user.classes?.name
       }
@@ -1579,33 +1610,6 @@ async function login() {
       isLoggedIn.value = true
       loadData()
       return
-    }
-    
-    // 如果学生账号不存在，尝试老师账号
-    if (!loginForm.username.includes('@')) {
-      const teacherEmail = `${loginForm.username}@teacher.local`
-      const { data: teacherData } = await supabase
-        .from('users')
-        .select('*, classes(name)')
-        .eq('email', teacherEmail)
-        .eq('password', loginForm.password)
-        .limit(1)
-      
-      if (teacherData && teacherData.length > 0) {
-        const t = teacherData[0]
-        currentUser.value = {
-          id: t.id,
-          email: t.email,
-          name: t.name,
-          role: t.role || 'teacher',
-          class_id: t.class_id,
-          class_name: t.classes?.name
-        }
-        localStorage.setItem('currentUser', JSON.stringify(currentUser.value))
-        isLoggedIn.value = true
-        loadData()
-        return
-      }
     }
     
     // 尝试 Supabase Auth 登录（注册的用户）
