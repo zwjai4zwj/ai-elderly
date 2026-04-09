@@ -746,13 +746,60 @@
           <!-- 学生详细记录弹窗 -->
           <div v-if="selectedStudent" class="bg-white rounded-xl p-6 shadow">
             <div class="flex justify-between items-center mb-4">
-              <h3 class="font-bold">{{ selectedStudent.name }} 的练习记录</h3>
+              <h3 class="font-bold">{{ selectedStudent.name }} 的学习情况</h3>
               <button @click="selectedStudent = null" class="text-gray-500 text-sm hover:text-gray-700">✕ 关闭</button>
             </div>
+            
+            <!-- 最高分详情 -->
+            <div v-if="getStudentStats(selectedStudent.id).highestRecord" class="mb-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-lg">🏆</span>
+                <h4 class="font-bold text-green-800">最高分记录</h4>
+                <span class="ml-auto text-2xl font-bold text-green-600">{{ getStudentStats(selectedStudent.id).highestScore }}分</span>
+              </div>
+              <p class="text-sm text-gray-600 mb-3">{{ getStudentStats(selectedStudent.id).highestRecord.case_data?.caseName || '练习记录' }} · {{ formatDate(getStudentStats(selectedStudent.id).highestRecord.created_at) }}</p>
+              
+              <!-- 四维度分数 -->
+              <div class="grid grid-cols-2 gap-2 mb-3">
+                <div class="bg-white rounded p-2 text-sm">
+                  <span class="text-gray-500">思政维度:</span>
+                  <span class="font-bold ml-1" :class="getDimensionClass(getStudentStats(selectedStudent.id).highestRecord.dimensions?.sizheng)">
+                    {{ getStudentStats(selectedStudent.id).highestRecord.dimensions?.sizheng || '--' }}分
+                  </span>
+                </div>
+                <div class="bg-white rounded p-2 text-sm">
+                  <span class="text-gray-500">心理慰藉:</span>
+                  <span class="font-bold ml-1" :class="getDimensionClass(getStudentStats(selectedStudent.id).highestRecord.dimensions?.xinli)">
+                    {{ getStudentStats(selectedStudent.id).highestRecord.dimensions?.xinli || '--' }}分
+                  </span>
+                </div>
+                <div class="bg-white rounded p-2 text-sm">
+                  <span class="text-gray-500">健康宣教:</span>
+                  <span class="font-bold ml-1" :class="getDimensionClass(getStudentStats(selectedStudent.id).highestRecord.dimensions?.jiankang)">
+                    {{ getStudentStats(selectedStudent.id).highestRecord.dimensions?.jiankang || '--' }}分
+                  </span>
+                </div>
+                <div class="bg-white rounded p-2 text-sm">
+                  <span class="text-gray-500">康复训练:</span>
+                  <span class="font-bold ml-1" :class="getDimensionClass(getStudentStats(selectedStudent.id).highestRecord.dimensions?.kangfu)">
+                    {{ getStudentStats(selectedStudent.id).highestRecord.dimensions?.kangfu || '--' }}分
+                  </span>
+                </div>
+              </div>
+              
+              <!-- 评语 -->
+              <div v-if="getStudentStats(selectedStudent.id).highestRecord.feedback" class="bg-white rounded p-3 text-sm">
+                <p class="text-gray-500 mb-1">📝 评价：</p>
+                <p class="text-gray-700">{{ getStudentStats(selectedStudent.id).highestRecord.feedback }}</p>
+              </div>
+            </div>
+            
+            <!-- 所有练习记录 -->
+            <h4 class="font-medium text-gray-600 mb-2">📋 全部练习记录</h4>
             <div v-if="studentRecords.length === 0" class="text-gray-400 text-center py-4">
               暂无练习记录
             </div>
-            <div v-else class="space-y-3 max-h-96 overflow-y-auto">
+            <div v-else class="space-y-2 max-h-64 overflow-y-auto">
               <div v-for="record in studentRecords" :key="record.id" class="p-3 bg-gray-50 rounded-lg">
                 <div class="flex justify-between items-start mb-2">
                   <div>
@@ -763,22 +810,22 @@
                     {{ record.score }}分
                   </p>
                 </div>
-                <div v-if="record.dimensions" class="grid grid-cols-2 gap-2 text-sm">
-                  <div class="flex justify-between">
-                    <span class="text-gray-500">思政维度:</span>
-                    <span class="font-medium">{{ record.dimensions.sizheng || '--' }}</span>
+                <div v-if="record.dimensions" class="grid grid-cols-4 gap-1 text-xs text-center">
+                  <div class="bg-white rounded p-1">
+                    <p class="text-gray-400">思政</p>
+                    <p class="font-bold">{{ record.dimensions.sizheng || '--' }}</p>
                   </div>
-                  <div class="flex justify-between">
-                    <span class="text-gray-500">心理慰藉:</span>
-                    <span class="font-medium">{{ record.dimensions.xinli || '--' }}</span>
+                  <div class="bg-white rounded p-1">
+                    <p class="text-gray-400">心理</p>
+                    <p class="font-bold">{{ record.dimensions.xinli || '--' }}</p>
                   </div>
-                  <div class="flex justify-between">
-                    <span class="text-gray-500">健康宣教:</span>
-                    <span class="font-medium">{{ record.dimensions.jiankang || '--' }}</span>
+                  <div class="bg-white rounded p-1">
+                    <p class="text-gray-400">健康</p>
+                    <p class="font-bold">{{ record.dimensions.jiankang || '--' }}</p>
                   </div>
-                  <div class="flex justify-between">
-                    <span class="text-gray-500">康复训练:</span>
-                    <span class="font-medium">{{ record.dimensions.kangfu || '--' }}</span>
+                  <div class="bg-white rounded p-1">
+                    <p class="text-gray-400">康复</p>
+                    <p class="font-bold">{{ record.dimensions.kangfu || '--' }}</p>
                   </div>
                 </div>
               </div>
@@ -2662,13 +2709,16 @@ function formatDate(dateStr) {
 // 获取学生统计数据
 function getStudentStats(studentId) {
   const records = allRecords.value.filter(r => r.user_id === studentId)
-  if (records.length === 0) return { totalPractices: 0, avgScore: 0, highestScore: 0, lowestScore: 0 }
+  if (records.length === 0) return { totalPractices: 0, avgScore: 0, highestScore: 0, lowestScore: 0, highestRecord: null }
   const scores = records.map(r => r.score).filter(s => s)
+  const highestScore = scores.length ? Math.max(...scores) : 0
+  const highestRecord = records.find(r => r.score === highestScore) || null
   return {
     totalPractices: records.length,
     avgScore: scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0,
-    highestScore: scores.length ? Math.max(...scores) : 0,
-    lowestScore: scores.length ? Math.min(...scores) : 0
+    highestScore: highestScore,
+    lowestScore: scores.length ? Math.min(...scores) : 0,
+    highestRecord: highestRecord
   }
 }
 
@@ -2771,11 +2821,49 @@ function getDimensionAdvice(classId) {
   const lowest = sorted[0]
   const highest = sorted[sorted.length - 1]
   
-  if (lowest.avg === highest.avg) {
-    return `班级各维度表现均衡，平均${highest.avg}分，继续保持！`
+  const advice = []
+  
+  // 优势分析
+  if (highest.avg >= 80) {
+    advice.push(`✅ "${highest.name}"表现突出，平均${highest.avg}分，是班级优势`)
+  } else if (highest.avg >= 60) {
+    advice.push(`👍 "${highest.name}"表现良好，平均${highest.avg}分`)
   }
   
-  return `"${lowest.name}"平均${lowest.avg}分，是班级薄弱环节，建议加强相关训练；"${highest.name}"平均${highest.avg}分，表现最好。`
+  // 薄弱分析
+  if (lowest.avg < 60) {
+    advice.push(`⚠️ "${lowest.name}"平均${lowest.avg}分，低于及格线，需要重点强化`)
+  } else if (lowest.avg < 70) {
+    advice.push(`💡 "${lowest.name}"平均${lowest.avg}分，相对偏弱，建议加强训练`)
+  }
+  
+  // 差距分析
+  const gap = highest.avg - lowest.avg
+  if (gap >= 20) {
+    advice.push(`📊 各维度发展不均衡，"${highest.name}"领先"${lowest.name}"${gap}分`)
+  }
+  
+  // 总体数据
+  const totalStudents = stats.studentCount
+  const totalPractices = stats.totalPractices
+  const avgScore = stats.avgScore
+  
+  if (totalStudents > 0 && avgScore > 0) {
+    advice.push(`📈 班级${totalStudents}名学生，共${totalPractices}次练习，平均分${avgScore}分`)
+  }
+  
+  // 特定维度改进建议
+  dims.forEach(d => {
+    if (d.avg < 70 && d.name === '思政维度') {
+      advice.push(`🎯 思政教育需加强，建议结合案例强化价值观引导`)
+    } else if (d.avg < 70 && d.name === '心理慰藉') {
+      advice.push(`🤝 沟通技巧训练不足，建议加强同理心和情感表达`)
+    } else if (d.avg < 70 && d.name === '康复训练') {
+      advice.push(`💪 康复指导需更专业，建议结合实际案例演示`)
+    }
+  })
+  
+  return advice.length > 0 ? advice.join('\n') : '暂无足够数据生成分析'
 }
 
 </script>
