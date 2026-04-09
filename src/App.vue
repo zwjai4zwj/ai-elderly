@@ -1960,8 +1960,8 @@ ${currentEmergency ? `- 突发事件：${currentEmergency}` : ''}
         concerns: ['健康问题', '子女关心'],
         communicationStyle: caseProfile.dialect === '普通话' ? '标准普通话' : `带${caseProfile.dialect}口音`
       },
-      deviceAlert: ${currentEmergency ? `'检测到老人${currentEmergency}，位置：客厅，时间：14:32'` : '""'},
-      openingLine: ${currentEmergency ? `'护理员，我好像${currentEmergency}了，快来帮帮我！'` : `'护理员，我最近总是头晕，你帮我看看吧。'`}
+      deviceAlert: currentEmergency ? `检测到老人${currentEmergency}，位置：客厅，时间：14:32` : '',
+      openingLine: currentEmergency ? `护理员，我好像${currentEmergency}了，快来帮帮我！` : `护理员，我最近总是头晕，你帮我看看吧。`
     }
     currentStep.value = 'case'
   } finally {
