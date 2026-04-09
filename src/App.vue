@@ -92,7 +92,7 @@
       <div class="bg-blue-600 text-white p-4">
         <div class="flex justify-between items-center max-w-4xl mx-auto">
           <div>
-            <h1 class="text-lg font-bold">康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.20</span></h1>
+            <h1 class="text-lg font-bold">康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.21</span></h1>
             <p class="text-sm text-blue-200">{{ currentUser.name }} ({{ currentUser.role === 'admin' ? '管理员' : currentUser.role === 'teacher' ? '老师' : '学生' }})</p>
           </div>
           <button @click="logout" class="text-sm bg-blue-500 px-3 py-1 rounded hover:bg-blue-400">退出</button>
@@ -372,7 +372,16 @@
                   <h4 class="font-medium text-orange-800 mb-2">病史信息</h4>
                   <p class="text-sm mb-1"><span class="text-gray-500">主诉：</span>{{ generatedCase.medicalHistory?.chiefComplaint }}</p>
                   <p class="text-sm mb-1"><span class="text-gray-500">现病史：</span>{{ generatedCase.medicalHistory?.presentIllness }}</p>
-                  <p class="text-sm"><span class="text-gray-500">用药：</span>{{ generatedCase.medicalHistory?.medications?.join('、') }}</p>
+                  <!-- 用药信息详细显示 -->
+                  <div v-if="generatedCase.medicalHistory?.medications?.length" class="mt-2">
+                    <p class="text-sm text-gray-500 mb-1">用药：</p>
+                    <div v-for="med in generatedCase.medicalHistory.medications" :key="med.disease" class="mb-2">
+                      <p class="text-xs font-medium text-orange-700">{{ med.disease }}：</p>
+                      <div v-for="drug in med.drugs" :key="drug.name" class="text-xs text-gray-600 ml-2">
+                        • {{ drug.name }} {{ drug.spec }}，{{ drug.usage }}
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 
                 <div class="bg-green-50 rounded-lg p-4">
@@ -417,7 +426,16 @@
                     <p class="font-medium text-orange-800 mb-2">疾病情况</p>
                     <div class="space-y-1 text-gray-700">
                       <p><span class="text-gray-500">主诉：</span>{{ generatedCase.medicalHistory?.chiefComplaint }}</p>
-                      <p><span class="text-gray-500">用药：</span>{{ Array.isArray(generatedCase.medicalHistory?.medications) ? generatedCase.medicalHistory?.medications?.join('、') : generatedCase.medicalHistory?.medications }}</p>
+                      <!-- 用药信息详细显示 -->
+                      <div v-if="generatedCase.medicalHistory?.medications?.length" class="mt-2">
+                        <p class="text-gray-500 text-xs">用药：</p>
+                        <div v-for="med in generatedCase.medicalHistory.medications" :key="med.disease" class="mb-1">
+                          <p class="text-xs font-medium text-orange-700">{{ med.disease }}：</p>
+                          <div v-for="drug in med.drugs" :key="drug.name" class="text-xs text-gray-600 ml-2">
+                            • {{ drug.name }} {{ drug.spec }}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   
@@ -1154,7 +1172,7 @@ const caseProfile = reactive({
   economicTypes: ['有退休金'],
   hobbies: ['看电视'],
   occupation: '退休工人',
-  studentTitle: '大夫'
+  studentTitle: '护理员'
 })
 
 const livingTypeOptions = ['独居', '丧偶', '有老伴', '无儿女', '儿女在外地']
@@ -1662,7 +1680,18 @@ async function generateCase() {
     "chiefComplaint": "主诉症状",
     "presentIllness": "现病史详细描述",
     "pastHistory": "既往病史",
-    "medications": ["正在服用的药物"]
+    "medications": [
+      {
+        "disease": "对应的疾病名称",
+        "drugs": [
+          {
+            "name": "药品名称",
+            "spec": "规格（如30mg/片）",
+            "usage": "用法用量（如每日1次，每次1片，口服）"
+          }
+        ]
+      }
+    ]
   },
   "personality": {
     "traits": ["性格特点"],
@@ -1712,13 +1741,20 @@ async function generateCase() {
         livingPlace: caseProfile.livingPlace,
         economicType: caseProfile.economicTypes.join('、') || '有退休金',
         hobby: caseProfile.hobbies.join('、') || '看电视',
-        studentTitle: caseProfile.studentTitle || '大夫'
+        studentTitle: caseProfile.studentTitle || '护理员'
       },
       medicalHistory: {
         chiefComplaint: '头晕、乏力1周',
         presentIllness: `患者有${allDiseases.join('、')}病史`,
         pastHistory: allDiseases.join('、'),
-        medications: ['降压药']
+        medications: [
+          {
+            disease: allDiseases[0] || '高血压',
+            drugs: [
+              { name: '硝苯地平控释片', spec: '30mg/片', usage: '每日1次，每次1片，口服' }
+            ]
+          }
+        ]
       },
       personality: {
         traits: [caseProfile.personality],
