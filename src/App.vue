@@ -92,7 +92,7 @@
       <div class="bg-blue-600 text-white p-4">
         <div class="flex justify-between items-center max-w-4xl mx-auto">
           <div>
-            <h1 class="text-lg font-bold">康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.16</span></h1>
+            <h1 class="text-lg font-bold">康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.17</span></h1>
             <p class="text-sm text-blue-200">{{ currentUser.name }} ({{ currentUser.role === 'admin' ? '管理员' : currentUser.role === 'teacher' ? '老师' : '学生' }})</p>
           </div>
           <button @click="logout" class="text-sm bg-blue-500 px-3 py-1 rounded hover:bg-blue-400">退出</button>
@@ -1302,31 +1302,35 @@ async function loadData() {
     }
     
     // 加载学生列表
-    const { data: studentsData } = await supabase
+    const { data: studentsData, error: studentError } = await supabase
       .from('users')
       .select('*, classes(name)')
       .eq('role', 'student')
     
-    if (studentsData) {
+    if (studentError) {
+      console.error('❌ 查询学生失败:', studentError)
+    } else if (studentsData) {
       students.value = studentsData.map(s => ({
         ...s,
         class_name: s.classes?.name || '未分配'
       }))
-      console.log('✅ 学生数量:', studentsData.length)
+      console.log('✅ 学生数量:', studentsData.length, studentsData.map(s => s.name).join(', '))
     }
     
     // 加载老师列表
-    const { data: teachersData } = await supabase
+    const { data: teachersData, error: teacherError } = await supabase
       .from('users')
       .select('*, classes(name)')
       .eq('role', 'teacher')
     
-    if (teachersData) {
+    if (teacherError) {
+      console.error('❌ 查询教师失败:', teacherError)
+    } else if (teachersData) {
       teachers.value = teachersData.map(t => ({
         ...t,
         class_name: t.classes?.name || '未分配'
       }))
-      console.log('✅ 教师数量:', teachersData.length)
+      console.log('✅ 教师数量:', teachersData.length, teachersData.map(t => t.name).join(', '))
     }
     
     // 加载统计
