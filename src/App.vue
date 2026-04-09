@@ -92,7 +92,7 @@
       <div class="bg-blue-600 text-white p-4">
         <div class="flex justify-between items-center max-w-4xl mx-auto">
           <div>
-            <h1 class="text-lg font-bold">康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.21</span></h1>
+            <h1 class="text-lg font-bold">康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.22</span></h1>
             <p class="text-sm text-blue-200">{{ currentUser.name }} ({{ currentUser.role === 'admin' ? '管理员' : currentUser.role === 'teacher' ? '老师' : '学生' }})</p>
           </div>
           <button @click="logout" class="text-sm bg-blue-500 px-3 py-1 rounded hover:bg-blue-400">退出</button>
@@ -152,13 +152,16 @@
           </div>
           
           <!-- 输入画像 -->
-          <div v-else-if="currentStep === 'input'" class="bg-white rounded-xl p-6 shadow">
-            <div class="flex items-center mb-6">
-              <button @click="currentStep = 'home'" class="text-gray-500 mr-3">← 返回</button>
-              <h2 class="text-xl font-bold">老人画像设置</h2>
+          <div v-else-if="currentStep === 'input'" class="bg-white rounded-xl shadow">
+            <div class="p-4 border-b sticky top-0 bg-white rounded-t-xl z-10">
+              <div class="flex items-center">
+                <button @click="currentStep = 'home'" class="text-gray-500 mr-3">← 返回</button>
+                <h2 class="text-xl font-bold">老人画像设置</h2>
+              </div>
             </div>
             
-            <div class="space-y-4">
+            <!-- 可滚动区域 -->
+            <div class="p-6 space-y-4 max-h-[calc(100vh-280px)] overflow-y-auto">
               <div>
                 <label class="block text-gray-700 mb-2">年龄</label>
                 <select v-model="caseProfile.age" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
@@ -178,9 +181,9 @@
               
               <div>
                 <label class="block text-gray-700 mb-2">疾病类型（可多选）</label>
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-3 gap-2">
                   <label v-for="d in diseases" :key="d" 
-                         class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                         class="flex items-center p-2 border rounded-lg cursor-pointer hover:bg-gray-50 text-sm"
                          :class="caseProfile.diseases.includes(d) ? 'border-blue-500 bg-blue-50' : ''">
                     <input type="checkbox" v-model="caseProfile.diseases" :value="d" class="mr-2">
                     {{ d }}
@@ -217,7 +220,7 @@
               
               <div>
                 <label class="block text-gray-700 mb-2">性格特点</label>
-                <select v-model="caseProfile.personality" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                <select v-model="caseProfile.personality" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
                   <option value="开朗健谈">开朗健谈</option>
                   <option value="内向沉默">内向沉默</option>
                   <option value="焦虑多疑">焦虑多疑</option>
@@ -227,7 +230,7 @@
               
               <div>
                 <label class="block text-gray-700 mb-2">方言偏好</label>
-                <select v-model="caseProfile.dialect" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                <select v-model="caseProfile.dialect" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
                   <option value="普通话">普通话</option>
                   <option value="北京话">北京话</option>
                   <option value="天津话">天津话</option>
@@ -264,45 +267,75 @@
                 </select>
               </div>
               
-              <div>
-                <label class="block text-gray-700 mb-2">居住场所</label>
-                <select v-model="caseProfile.livingPlace" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                  <option value="家">家</option>
-                  <option value="医院">医院</option>
-                  <option value="社区">社区</option>
-                  <option value="养老机构">养老机构</option>
-                </select>
+              <!-- 突发事件模块 -->
+              <div class="bg-red-50 rounded-lg p-4">
+                <label class="block text-red-700 mb-2 font-medium">🚨 突发事件（可选）</label>
+                <div class="grid grid-cols-4 gap-2">
+                  <label v-for="e in emergencyOptions" :key="e" 
+                         class="flex items-center p-2 border rounded-lg cursor-pointer hover:bg-red-100 text-sm bg-white"
+                         :class="caseProfile.emergency === e ? 'border-red-500 bg-red-100' : ''">
+                    <input type="radio" v-model="caseProfile.emergency" :value="e" class="mr-1">
+                    {{ e }}
+                  </label>
+                </div>
+                <div class="mt-2 flex gap-2">
+                  <input 
+                    v-model="customEmergency" 
+                    placeholder="自定义突发事件..."
+                    class="flex-1 px-3 py-1 border rounded-lg text-sm"
+                  />
+                  <button @click="addCustomEmergency" :disabled="!customEmergency.trim()"
+                          class="px-3 py-1 bg-red-500 text-white rounded-lg text-sm disabled:bg-gray-300">
+                    添加
+                  </button>
+                </div>
+                <div v-if="caseProfile.customEmergency" class="mt-2 p-2 bg-white rounded text-sm">
+                  <span class="text-red-600">当前选择：{{ caseProfile.customEmergency }}</span>
+                  <button @click="caseProfile.customEmergency = ''" class="ml-2 text-gray-500">×</button>
+                </div>
+              </div>
+              
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-gray-700 mb-2">居住场所</label>
+                  <select v-model="caseProfile.livingPlace" class="w-full px-3 py-2 border rounded-lg text-sm">
+                    <option value="家">家</option>
+                    <option value="医院">医院</option>
+                    <option value="社区">社区</option>
+                    <option value="养老机构">养老机构</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-gray-700 mb-2">职业类型</label>
+                  <select v-model="caseProfile.occupation" class="w-full px-3 py-2 border rounded-lg text-sm">
+                    <option value="退休教师">退休教师</option>
+                    <option value="退休工人">退休工人</option>
+                    <option value="退休公务员">退休公务员</option>
+                    <option value="退休农民">退休农民</option>
+                  </select>
+                </div>
               </div>
               
               <div>
                 <label class="block text-gray-700 mb-2">居住类型（可多选）</label>
-                <div class="grid grid-cols-2 gap-2">
+                <div class="flex flex-wrap gap-2">
                   <label v-for="t in livingTypeOptions" :key="t" 
-                         class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                         class="flex items-center px-3 py-1 border rounded-full cursor-pointer hover:bg-gray-50 text-sm"
                          :class="caseProfile.livingTypes.includes(t) ? 'border-blue-500 bg-blue-50' : ''">
-                    <input type="checkbox" v-model="caseProfile.livingTypes" :value="t" class="mr-2">
+                    <input type="checkbox" v-model="caseProfile.livingTypes" :value="t" class="mr-1">
                     {{ t }}
                   </label>
                 </div>
               </div>
               
               <div>
-                <label class="block text-gray-700 mb-2">职业类型</label>
-                <select v-model="caseProfile.occupation" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                  <option value="退休教师">退休教师</option>
-                  <option value="退休工人">退休工人</option>
-                  <option value="退休公务员">退休公务员</option>
-                  <option value="退休农民">退休农民</option>
-                </select>
-              </div>
-              
-              <div>
                 <label class="block text-gray-700 mb-2">经济类型（可多选）</label>
-                <div class="grid grid-cols-2 gap-2">
+                <div class="flex flex-wrap gap-2">
                   <label v-for="e in economicTypeOptions" :key="e" 
-                         class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                         class="flex items-center px-3 py-1 border rounded-full cursor-pointer hover:bg-gray-50 text-sm"
                          :class="caseProfile.economicTypes.includes(e) ? 'border-blue-500 bg-blue-50' : ''">
-                    <input type="checkbox" v-model="caseProfile.economicTypes" :value="e" class="mr-2">
+                    <input type="checkbox" v-model="caseProfile.economicTypes" :value="e" class="mr-1">
                     {{ e }}
                   </label>
                 </div>
@@ -310,11 +343,11 @@
               
               <div>
                 <label class="block text-gray-700 mb-2">爱好（可多选）</label>
-                <div class="grid grid-cols-2 gap-2">
+                <div class="flex flex-wrap gap-2">
                   <label v-for="h in hobbyOptions" :key="h" 
-                         class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                         class="flex items-center px-3 py-1 border rounded-full cursor-pointer hover:bg-gray-50 text-sm"
                          :class="caseProfile.hobbies.includes(h) ? 'border-blue-500 bg-blue-50' : ''">
-                    <input type="checkbox" v-model="caseProfile.hobbies" :value="h" class="mr-2">
+                    <input type="checkbox" v-model="caseProfile.hobbies" :value="h" class="mr-1">
                     {{ h }}
                   </label>
                 </div>
@@ -325,10 +358,13 @@
                 <input 
                   v-model="caseProfile.studentTitle" 
                   placeholder="如：大夫、护士、小伙子、闺女等"
-                  class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-4 py-2 border rounded-lg text-sm"
                 />
               </div>
-              
+            </div>
+            
+            <!-- 底部固定按钮 -->
+            <div class="p-4 border-t sticky bottom-0 bg-white rounded-b-xl">
               <button 
                 @click="generateCase" 
                 :disabled="isGenerating || (caseProfile.diseases.length === 0 && caseProfile.customDiseases.length === 0)"
@@ -389,6 +425,12 @@
                   <p class="text-sm"><span class="text-gray-500">特点：</span>{{ generatedCase.personality?.traits?.join('、') }}</p>
                   <p class="text-sm"><span class="text-gray-500">关注：</span>{{ generatedCase.personality?.concerns?.join('、') }}</p>
                 </div>
+                
+                <!-- 智能设备报警 -->
+                <div v-if="generatedCase.deviceAlert" class="bg-red-50 rounded-lg p-4 border-2 border-red-300">
+                  <h4 class="font-medium text-red-700 mb-2">🚨 智能设备报警</h4>
+                  <p class="text-sm text-red-600 font-medium">{{ generatedCase.deviceAlert }}</p>
+                </div>
               </div>
             </div>
             
@@ -446,6 +488,12 @@
                       <p>{{ Array.isArray(generatedCase.personality?.traits) ? generatedCase.personality?.traits?.join('、') : generatedCase.personality?.traits }}</p>
                       <p class="text-xs text-gray-500 mt-1">关注：{{ Array.isArray(generatedCase.personality?.concerns) ? generatedCase.personality?.concerns?.join('、') : generatedCase.personality?.concerns }}</p>
                     </div>
+                  </div>
+                  
+                  <!-- 智能设备报警 -->
+                  <div v-if="generatedCase.deviceAlert" class="bg-red-50 rounded-lg p-3 border border-red-300">
+                    <p class="font-medium text-red-700 mb-1">🚨 设备报警</p>
+                    <p class="text-xs text-red-600">{{ generatedCase.deviceAlert }}</p>
                   </div>
                   
                   <!-- 居住情况 -->
@@ -506,18 +554,19 @@
             </div>
             
             <div class="p-4 bg-white border-t rounded-b-lg">
-              <div class="flex gap-2">
-                <input 
+              <div class="flex gap-2 items-end">
+                <textarea 
                   v-model="userInput" 
-                  @keyup.enter="sendMessage"
-                  placeholder="输入消息..."
-                  class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  @keyup.enter.ctrl="sendMessage"
+                  placeholder="输入消息...（Ctrl+Enter发送）"
+                  class="flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
+                  rows="3"
                   :disabled="isTyping"
-                />
+                ></textarea>
                 <button 
                   @click="sendMessage" 
                   :disabled="!userInput.trim() || isTyping"
-                  class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+                  class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 h-full"
                 >
                   发送
                 </button>
@@ -1172,8 +1221,13 @@ const caseProfile = reactive({
   economicTypes: ['有退休金'],
   hobbies: ['看电视'],
   occupation: '退休工人',
-  studentTitle: '护理员'
+  studentTitle: '护理员',
+  emergency: '',
+  customEmergency: ''
 })
+
+const customEmergency = ref('')
+const emergencyOptions = ['噎食', '心脏骤停', '跌倒', '走失', '擦伤', '褥疮', '高烧']
 
 const livingTypeOptions = ['独居', '丧偶', '有老伴', '无儿女', '儿女在外地']
 const economicTypeOptions = ['无收入', '有退休金', '有商业保险', '儿女赡养']
@@ -1632,6 +1686,14 @@ function removeCustomDisease(disease) {
   }
 }
 
+// 添加自定义突发事件
+function addCustomEmergency() {
+  if (customEmergency.value.trim()) {
+    caseProfile.customEmergency = customEmergency.value.trim()
+    customEmergency.value = ''
+  }
+}
+
 // 获取所有选中的疾病
 function getAllDiseases() {
   return [...caseProfile.diseases, ...caseProfile.customDiseases]
@@ -1647,6 +1709,9 @@ async function generateCase() {
   
   isGenerating.value = true
   
+  // 获取突发事件
+  const currentEmergency = caseProfile.customEmergency || caseProfile.emergency || ''
+  
   try {
     // 直接调用DeepSeek API生成病例
     const prompt = `请为一个老年患者生成详细病例信息，以JSON格式返回。
@@ -1661,6 +1726,7 @@ async function generateCase() {
 - 居住：${caseProfile.livingPlace}，${caseProfile.livingTypes.join('、')}
 - 经济：${caseProfile.economicTypes.join('、')}
 - 爱好：${caseProfile.hobbies.join('、')}
+${currentEmergency ? `- 突发事件：${currentEmergency}` : ''}
 
 请返回如下JSON格式（不要有其他内容）：
 {
@@ -1698,7 +1764,8 @@ async function generateCase() {
     "concerns": ["关心的问题"],
     "communicationStyle": "沟通风格"
   },
-  "openingLine": "老人的开场白（要自然，符合老人身份和疾病情况，称呼对方为护理员）"
+  "deviceAlert": "智能设备报警内容（模拟智能手环或监控设备向平台发送的报警信息，如：'检测到老人跌倒，位置：客厅，时间：14:32'，如果没有突发事件则返回空字符串）",
+  "openingLine": "老人的开场白（要自然，符合老人身份和疾病情况，称呼对方为护理员${currentEmergency ? '，如果是突发事件场景，开场白要体现紧急情况' : ''}）"
 }
 
 重要：studentTitle必须固定为"护理员"，openingLine中必须称呼对方为"护理员"！`
