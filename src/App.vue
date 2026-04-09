@@ -92,7 +92,7 @@
       <div class="bg-blue-600 text-white p-4">
         <div class="flex justify-between items-center max-w-4xl mx-auto">
           <div>
-            <h1 class="text-lg font-bold">康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.18</span></h1>
+            <h1 class="text-lg font-bold">康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.19</span></h1>
             <p class="text-sm text-blue-200">{{ currentUser.name }} ({{ currentUser.role === 'admin' ? '管理员' : currentUser.role === 'teacher' ? '老师' : '学生' }})</p>
           </div>
           <button @click="logout" class="text-sm bg-blue-500 px-3 py-1 rounded hover:bg-blue-400">退出</button>
@@ -504,8 +504,16 @@
                   发送
                 </button>
               </div>
-              <button @click="endChat" class="w-full mt-3 py-2 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600">
-                结束对话并评分
+              <!-- 对话轮数提示 -->
+              <div v-if="messages.filter(m => m.role === 'user').length < 5" class="mt-2 text-sm text-orange-600 text-center">
+                💡 建议继续深入沟通，当前已对话 {{ messages.filter(m => m.role === 'user').length }} 轮（建议至少5轮）
+              </div>
+              <button 
+                @click="endChat" 
+                :disabled="messages.filter(m => m.role === 'user').length < 5"
+                class="w-full mt-3 py-2 text-white rounded-lg text-sm transition-colors"
+                :class="messages.filter(m => m.role === 'user').length >= 5 ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-400 cursor-not-allowed'">
+                结束对话并评分 {{ messages.filter(m => m.role === 'user').length < 5 ? `（还需${5 - messages.filter(m => m.role === 'user').length}轮）` : '' }}
               </button>
             </div>
             </div><!-- 关闭聊天区域div -->
@@ -582,6 +590,12 @@
                   </ul>
                 </div>
               </div>
+            </div>
+            
+            <!-- 参考答案 -->
+            <div v-if="score.referenceAnswer" class="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6 shadow">
+              <h3 class="font-bold mb-3 text-green-800">📚 理想沟通参考</h3>
+              <p class="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{{ score.referenceAnswer }}</p>
             </div>
             
             <button @click="resetPractice" class="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
@@ -2252,7 +2266,8 @@ ${chatHistory}
 
 评分要求：
 - 严格根据对话内容评分，不要随意给高分
-- 如果某维度完全没有涉及，该维度得0分
+- 如果某维度完全没有涉及，该维度得0分，并在improvements中建议"建议加强XX维度的沟通"
+- 对话轮数较少时，在feedback中体现"沟通不够充分"
 - 优点和不足要具体，结合对话内容
 - 建议要实用，针对不足提出
 
@@ -2268,7 +2283,8 @@ ${chatHistory}
   "feedback": "整体评价（50字以内）",
   "strengths": ["具体优点1", "具体优点2"],
   "weaknesses": ["具体不足1", "具体不足2"],
-  "improvements": ["具体建议1", "具体建议2"]
+  "improvements": ["具体建议1", "具体建议2"],
+  "referenceAnswer": "针对该老人情况的理想沟通参考答案，包含四个维度的合理化建议，300字以内"
 }`
 
     const response = await fetch(EDGE_FUNCTION_URL, {
