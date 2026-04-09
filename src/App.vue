@@ -92,7 +92,7 @@
       <div class="bg-blue-600 text-white p-4">
         <div class="flex justify-between items-center max-w-4xl mx-auto">
           <div>
-            <h1 class="text-lg font-bold">康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.23</span></h1>
+            <h1 class="text-lg font-bold">康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.24</span></h1>
             <p class="text-sm text-blue-200">{{ currentUser.name }} ({{ currentUser.role === 'admin' ? '管理员' : currentUser.role === 'teacher' ? '老师' : '学生' }})</p>
           </div>
           <button @click="logout" class="text-sm bg-blue-500 px-3 py-1 rounded hover:bg-blue-400">退出</button>
@@ -105,134 +105,40 @@
         <div v-if="currentUser.role === 'student'">
           <!-- 步骤指示器 -->
           <div v-if="currentStep === 'home'" class="space-y-4">
-            <!-- 顶部横幅：思政标语+护理场景 -->
-            <div class="flex gap-4">
-              <!-- 思政标语 -->
-              <div class="bg-gradient-to-r from-red-50 to-pink-50 rounded-xl p-6 shadow flex items-center justify-center" style="writing-mode: vertical-rl; width: 60px;">
-                <div class="text-center">
+            <!-- 顶部横幅：思政标语+护理场景（响应式布局） -->
+            <div class="home-banner">
+              <!-- 思政标语 - 电脑端左侧纵向，手机端顶部横向 -->
+              <div class="slogan-pc">
+                <div class="slogan-vertical">
                   <p class="text-2xl font-bold text-red-600" style="font-family: 'KaiTi', 'STKaiti', 'STXingkai', serif;">老吾老</p>
                   <p class="text-2xl font-bold text-red-600" style="font-family: 'KaiTi', 'STKaiti', 'STXingkai', serif;">及人之老</p>
                 </div>
               </div>
+              <div class="slogan-mobile">
+                <div class="bg-gradient-to-r from-red-50 to-pink-50 rounded-xl px-4 py-2 shadow text-center">
+                  <p class="text-lg font-bold text-red-600" style="font-family: 'KaiTi', 'STKaiti', 'STXingkai', serif;">老吾老 · 及人之老</p>
+                </div>
+              </div>
               
-              <!-- 护理场景图片 -->
-              <div class="flex-1 bg-gradient-to-br from-blue-100 via-green-50 to-teal-100 rounded-xl p-4 shadow relative overflow-hidden" style="min-height: 180px;">
-                <svg viewBox="0 0 400 160" class="w-full h-full">
-                  <!-- 背景：阳光 -->
-                  <defs>
-                    <radialGradient id="sunGrad" cx="85%" cy="15%" r="20%">
-                      <stop offset="0%" stop-color="#FFE066"/>
-                      <stop offset="100%" stop-color="#FFF9DB"/>
-                    </radialGradient>
-                    <linearGradient id="grassGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stop-color="#7CB342"/>
-                      <stop offset="100%" stop-color="#558B2F"/>
-                    </linearGradient>
-                  </defs>
-                  
-                  <!-- 太阳光芒 -->
-                  <circle cx="340" cy="30" r="25" fill="url(#sunGrad)"/>
-                  <g stroke="#FFE066" stroke-width="2" opacity="0.6">
-                    <line x1="340" y1="0" x2="340" y2="5"/>
-                    <line x1="365" y1="15" x2="360" y2="20"/>
-                    <line x1="375" y1="30" x2="370" y2="30"/>
-                    <line x1="365" y1="45" x2="360" y2="40"/>
-                    <line x1="315" y1="15" x2="320" y2="20"/>
-                    <line x1="305" y1="30" x2="310" y2="30"/>
-                    <line x1="315" y1="45" x2="320" y2="40"/>
-                  </g>
-                  
-                  <!-- 地面/草地 -->
-                  <rect x="0" y="120" width="400" height="40" fill="url(#grassGrad)"/>
-                  <ellipse cx="50" cy="122" rx="15" ry="5" fill="#8BC34A"/>
-                  <ellipse cx="150" cy="125" rx="20" ry="6" fill="#9CCC65"/>
-                  <ellipse cx="280" cy="123" rx="18" ry="5" fill="#8BC34A"/>
-                  
-                  <!-- 树木 -->
-                  <rect x="25" y="80" width="10" height="45" fill="#6D4C41"/>
-                  <circle cx="30" cy="65" r="25" fill="#4CAF50"/>
-                  <circle cx="20" cy="75" r="15" fill="#66BB6A"/>
-                  <circle cx="40" cy="70" r="18" fill="#81C784"/>
-                  
-                  <rect x="360" y="90" width="8" height="35" fill="#6D4C41"/>
-                  <circle cx="364" cy="78" r="18" fill="#4CAF50"/>
-                  <circle cx="355" cy="85" r="12" fill="#66BB6A"/>
-                  
-                  <!-- 轮椅 -->
-                  <g transform="translate(160, 85)">
-                    <!-- 轮椅底座 -->
-                    <rect x="0" y="20" width="60" height="8" rx="2" fill="#455A64"/>
-                    <!-- 轮椅靠背 -->
-                    <path d="M 10 20 L 10 -15 Q 15 -20 20 -15 L 20 20" fill="none" stroke="#37474F" stroke-width="3"/>
-                    <!-- 轮椅座垫 -->
-                    <rect x="15" y="10" width="35" height="8" rx="2" fill="#607D8B"/>
-                    <!-- 后轮 -->
-                    <circle cx="10" cy="28" r="12" fill="none" stroke="#37474F" stroke-width="3"/>
-                    <circle cx="10" cy="28" r="2" fill="#37474F"/>
-                    <!-- 前轮 -->
-                    <circle cx="50" cy="28" r="6" fill="none" stroke="#37474F" stroke-width="2"/>
-                    <circle cx="50" cy="28" r="1.5" fill="#37474F"/>
-                    <!-- 扶手 -->
-                    <rect x="20" y="5" width="25" height="3" rx="1" fill="#78909C"/>
-                  </g>
-                  
-                  <!-- 老人（坐在轮椅上） -->
-                  <g transform="translate(175, 55)">
-                    <!-- 头部 -->
-                    <circle cx="15" cy="8" r="12" fill="#FFCCBC"/>
-                    <!-- 头发 -->
-                    <path d="M 5 5 Q 15 -5 25 5" fill="#E0E0E0"/>
-                    <!-- 眼睛 -->
-                    <circle cx="11" cy="7" r="1.5" fill="#37474F"/>
-                    <circle cx="19" cy="7" r="1.5" fill="#37474F"/>
-                    <!-- 微笑 -->
-                    <path d="M 11 12 Q 15 15 19 12" fill="none" stroke="#D87A68" stroke-width="1"/>
-                    <!-- 身体 -->
-                    <rect x="5" y="18" width="20" height="20" rx="3" fill="#5C6BC0"/>
-                    <!-- 围巾 -->
-                    <rect x="3" y="18" width="24" height="4" rx="2" fill="#EF5350"/>
-                    <!-- 手 -->
-                    <ellipse cx="25" cy="30" rx="4" ry="3" fill="#FFCCBC"/>
-                  </g>
-                  
-                  <!-- 护理员 -->
-                  <g transform="translate(110, 50)">
-                    <!-- 头部 -->
-                    <circle cx="15" cy="10" r="11" fill="#FFE0B2"/>
-                    <!-- 头发 -->
-                    <path d="M 5 8 Q 15 -2 25 8" fill="#5D4037"/>
-                    <ellipse cx="15" cy="5" rx="10" ry="5" fill="#5D4037"/>
-                    <!-- 眼睛 -->
-                    <circle cx="11" cy="9" r="1.5" fill="#37474F"/>
-                    <circle cx="19" cy="9" r="1.5" fill="#37474F"/>
-                    <!-- 微笑 -->
-                    <path d="M 11 14 Q 15 17 19 14" fill="none" stroke="#D87A68" stroke-width="1"/>
-                    <!-- 身体/护士服 -->
-                    <rect x="5" y="20" width="20" height="30" rx="2" fill="#E3F2FD"/>
-                    <!-- 护士帽 -->
-                    <path d="M 8 0 L 22 0 L 20 5 L 10 5 Z" fill="#FFFFFF" stroke="#90CAF9" stroke-width="0.5"/>
-                    <!-- 十字 -->
-                    <rect x="13" y="25" width="4" height="12" fill="#2196F3"/>
-                    <rect x="9" y="29" width="12" height="4" fill="#2196F3"/>
-                    <!-- 推轮椅的手 -->
-                    <ellipse cx="30" cy="42" rx="4" ry="3" fill="#FFE0B2"/>
-                  </g>
-                  
-                  <!-- 温馨元素：爱心 -->
-                  <g transform="translate(280, 60)">
-                    <path d="M 0 5 C 0 0 -5 0 -5 -3 C -5 -7 0 -10 0 -10 C 0 -10 5 -7 5 -3 C 5 0 0 0 0 5" fill="#E91E63" opacity="0.7"/>
-                  </g>
-                  <g transform="translate(300, 50)">
-                    <path d="M 0 4 C 0 0 -4 0 -4 -2 C -4 -5 0 -8 0 -8 C 0 -8 4 -5 4 -2 C 4 0 0 0 0 4" fill="#E91E63" opacity="0.5"/>
-                  </g>
-                  
-                  <!-- 温馨元素：音符 -->
-                  <text x="250" y="45" font-size="16" fill="#7E57C2" opacity="0.6">♪</text>
-                  <text x="330" y="60" font-size="12" fill="#7E57C2" opacity="0.5">♫</text>
-                </svg>
+              <!-- 护理场景图片 - 电脑端右侧 -->
+              <div class="care-photo-pc">
+                <img 
+                  src="https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?w=400&h=300&fit=crop" 
+                  alt="护理关怀"
+                  class="w-full h-full object-cover rounded-xl shadow"
+                />
                 <div class="absolute bottom-2 right-3 text-xs text-green-700 bg-white/70 px-2 py-1 rounded">
                   🌤️ 沐浴阳光 温馨陪伴
                 </div>
+              </div>
+              
+              <!-- 手机端护理照片（可选显示） -->
+              <div class="care-photo-mobile">
+                <img 
+                  src="https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?w=200&h=120&fit=crop" 
+                  alt="护理关怀"
+                  class="w-full h-full object-cover rounded-xl shadow"
+                />
               </div>
             </div>
             
@@ -3218,4 +3124,133 @@ function getDimensionAdvice(classId) {
 }
 
 </script>
-// 强制刷新版本 Wed Apr  8 00:35:35 CST 2026
+
+<style>
+/* v3.24 响应式布局样式 */
+
+/* ===== 电脑端布局 (宽度 > 768px) ===== */
+@media (min-width: 769px) {
+  /* 思政标语 - 电脑端固定在左侧 */
+  .slogan-pc {
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .slogan-vertical {
+    background: linear-gradient(to bottom, #fef2f2, #fce7f3);
+    border-radius: 0 12px 12px 0;
+    padding: 20px 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    letter-spacing: 8px;
+  }
+  
+  .slogan-vertical p {
+    font-size: 1.5rem;
+    margin: 8px 0;
+  }
+  
+  /* 手机端标语 - 电脑端隐藏 */
+  .slogan-mobile {
+    display: none;
+  }
+  
+  /* 护理照片 - 电脑端固定在右侧 */
+  .care-photo-pc {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 33%;
+    max-width: 400px;
+    height: 200px;
+    z-index: 10;
+    display: block;
+  }
+  
+  .care-photo-pc img {
+    border-radius: 12px 0 0 12px;
+    box-shadow: -4px 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* 手机端照片 - 电脑端隐藏 */
+  .care-photo-mobile {
+    display: none;
+  }
+  
+  /* 横幅容器 - 电脑端保持空白占位 */
+  .home-banner {
+    min-height: 20px;
+    position: relative;
+  }
+}
+
+/* ===== 手机端布局 (宽度 <= 768px) ===== */
+@media (max-width: 768px) {
+  /* 横幅容器 - 手机端flex布局 */
+  .home-banner {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: auto;
+  }
+  
+  /* 电脑端标语 - 手机端隐藏 */
+  .slogan-pc {
+    display: none;
+  }
+  
+  /* 手机端标语 - 横向显示在顶部 */
+  .slogan-mobile {
+    display: block;
+    width: 100%;
+  }
+  
+  /* 电脑端照片 - 手机端隐藏 */
+  .care-photo-pc {
+    display: none;
+  }
+  
+  /* 手机端照片 - 显示小图 */
+  .care-photo-mobile {
+    display: block;
+    width: 100%;
+    height: 120px;
+  }
+}
+
+/* ===== 平板端优化 (769px - 1024px) ===== */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .slogan-vertical p {
+    font-size: 1.25rem;
+  }
+  
+  .care-photo-pc {
+    width: 30%;
+    max-width: 300px;
+    height: 180px;
+  }
+}
+
+/* ===== 大屏幕优化 (> 1024px) ===== */
+@media (min-width: 1025px) {
+  .slogan-vertical p {
+    font-size: 1.75rem;
+    letter-spacing: 12px;
+  }
+  
+  .care-photo-pc {
+    max-width: 450px;
+    height: 220px;
+  }
+}
+</style>
+
+// 强制刷新版本 v3.24 - 思政标语响应式布局 + 真人护理照片
