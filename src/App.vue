@@ -91,11 +91,26 @@
       <!-- 顶部导航 -->
       <div class="bg-blue-600 text-white p-4">
         <div class="flex justify-between items-center max-w-4xl mx-auto">
-          <div>
-            <h1 class="text-lg font-bold">阳泉师专康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.25</span></h1>
-            <p class="text-sm text-blue-200">{{ currentUser.name }} ({{ currentUser.role === 'admin' ? '管理员' : currentUser.role === 'teacher' ? '老师' : '学生' }})</p>
+          <!-- 左侧用户信息 -->
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-blue-400 rounded-full flex items-center justify-center text-sm font-medium">
+              {{ currentUser.name?.charAt(0) || 'U' }}
+            </div>
+            <div class="hidden sm:block">
+              <p class="text-sm font-medium">{{ currentUser.name }}</p>
+              <p class="text-xs text-blue-200">{{ currentUser.role === 'admin' ? '管理员' : currentUser.role === 'teacher' ? '老师' : '学生' }}</p>
+            </div>
           </div>
-          <button @click="logout" class="text-sm bg-blue-500 px-3 py-1 rounded hover:bg-blue-400">退出</button>
+          
+          <!-- 中间系统名称 -->
+          <h1 class="text-lg md:text-xl font-bold text-center flex-1 mx-4">
+            阳泉师专康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-1">v3.26</span>
+          </h1>
+          
+          <!-- 右侧退出按钮 -->
+          <button @click="logout" class="text-sm bg-blue-500 px-3 py-1.5 rounded hover:bg-blue-400 flex items-center gap-1">
+            <span>退出</span>
+          </button>
         </div>
       </div>
       
@@ -107,15 +122,15 @@
           <div v-if="currentStep === 'home'" class="space-y-4">
             <!-- 顶部横幅：思政标语+护理场景（响应式布局） -->
             <div class="home-banner">
-              <!-- 思政标语 - 电脑端左侧纵向，手机端顶部横向 -->
+              <!-- 思政标语 - 电脑端左侧纵向 -->
               <div class="slogan-pc">
                 <div class="slogan-vertical">
-                  <p class="slogan-text">老吾老</p>
-                  <p class="slogan-text">及人之老</p>
+                  <p class="slogan-main">老吾老</p>
+                  <p class="slogan-main">及人之老</p>
                 </div>
               </div>
               <div class="slogan-mobile">
-                <div class="bg-gradient-to-r from-rose-50 via-pink-50 to-red-50 rounded-xl px-4 py-2 shadow text-center border border-rose-100">
+                <div class="bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 rounded-xl px-4 py-2 shadow text-center border border-amber-200">
                   <p class="slogan-text-mobile">老吾老 · 及人之老</p>
                 </div>
               </div>
@@ -123,12 +138,12 @@
               <!-- 护理场景图片 - 电脑端右侧 -->
               <div class="care-photo-pc">
                 <img 
-                  src="https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?w=500&h=400&fit=crop" 
+                  src="https://s.coze.cn/image/ypihf0-1Rfk/" 
                   alt="温馨护理场景"
                   class="care-photo-img"
                 />
                 <div class="care-photo-badge">
-                  🌤️ 阳光康养 暖心相伴
+                  🌿 绿色康养 温馨陪伴
                 </div>
               </div>
               
@@ -3126,21 +3141,24 @@ function getDimensionAdvice(classId) {
 </script>
 
 <style>
-/* v3.25 毛笔字体 · 中国风设计 · 思政标语优化 */
+/* v3.26 毛笔字体 · 中国风设计 · 思政标语优化 */
 
 /* 引入 Google Fonts 毛笔字体 */
 @import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap');
 
 /* ===== 毛笔字体类 ===== */
-.slogan-text {
+/* 黑色书法大字 - 竖排主标语 */
+.slogan-main {
   font-family: 'Ma Shan Zheng', 'STXingkai', 'KaiTi', serif;
   font-size: 3.5rem;
-  color: #c41e3a;
+  color: #1a1a1a;
+  font-weight: bold;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-  letter-spacing: 0.3em;
-  line-height: 1.4;
+  letter-spacing: 0.25em;
+  line-height: 1.3;
 }
 
+/* 手机端书法字 */
 .slogan-text-mobile {
   font-family: 'Ma Shan Zheng', 'STXingkai', 'KaiTi', serif;
   font-size: 1.5rem;
@@ -3161,10 +3179,9 @@ function getDimensionAdvice(classId) {
     display: flex;
     justify-content: center;
     align-items: center;
-    /* 中国风渐变背景 - 淡雅暖色调 */
-    background: linear-gradient(135deg, #fff5f5 0%, #ffe4e1 50%, #fff0f0 100%);
-    /* 添加淡淡的水墨竹叶纹理效果 */
-    box-shadow: inset -4px 0 20px rgba(196, 30, 58, 0.05);
+    /* 米白色中国风背景 */
+    background: linear-gradient(180deg, #faf8f5 0%, #f5f0e8 50%, #faf8f5 100%);
+    box-shadow: inset -4px 0 20px rgba(0, 0, 0, 0.03);
   }
   
   /* 思政标语容器 */
@@ -3173,10 +3190,10 @@ function getDimensionAdvice(classId) {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
   }
   
-  .slogan-vertical .slogan-text {
+  .slogan-vertical .slogan-main {
     writing-mode: vertical-rl;
     text-orientation: upright;
   }
@@ -3186,44 +3203,46 @@ function getDimensionAdvice(classId) {
     display: none;
   }
   
-  /* 护理照片 - 电脑端固定在右侧 */
+  /* 护理照片 - 电脑端固定在右侧，竖图全高 */
   .care-photo-pc {
     position: fixed;
     right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 32%;
-    max-width: 380px;
-    height: 210px;
+    top: 0;
+    width: 30%;
+    max-width: 360px;
+    height: 100vh;
     z-index: 10;
     display: block;
-    /* 自然色调背景，与左侧呼应 */
+    /* 自然暖色调背景 */
     background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
     border-radius: 16px 0 0 16px;
     overflow: hidden;
-    box-shadow: -4px 4px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.08);
   }
   
   .care-photo-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center;
     border-radius: 16px 0 0 16px;
   }
   
   .care-photo-badge {
     position: absolute;
-    bottom: 12px;
+    bottom: 20px;
     left: 12px;
+    right: 12px;
     background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(8px);
     color: #166534;
-    padding: 6px 12px;
+    padding: 8px 14px;
     border-radius: 20px;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 500;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(22, 101, 52, 0.1);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(22, 101, 52, 0.15);
+    text-align: center;
   }
   
   /* 手机端照片 - 电脑端隐藏 */
@@ -3284,9 +3303,9 @@ function getDimensionAdvice(classId) {
 
 /* ===== 平板端优化 (769px - 1024px) ===== */
 @media (min-width: 769px) and (max-width: 1024px) {
-  .slogan-text {
-    font-size: 2.5rem;
-    letter-spacing: 0.25em;
+  .slogan-main {
+    font-size: 2.8rem;
+    letter-spacing: 0.2em;
   }
   
   .slogan-pc {
@@ -3294,28 +3313,26 @@ function getDimensionAdvice(classId) {
   }
   
   .care-photo-pc {
-    width: 28%;
-    max-width: 300px;
-    height: 190px;
+    width: 26%;
+    max-width: 280px;
   }
 }
 
 /* ===== 大屏幕优化 (> 1024px) ===== */
 @media (min-width: 1025px) {
-  .slogan-text {
+  .slogan-main {
     font-size: 4rem;
-    letter-spacing: 0.35em;
+    letter-spacing: 0.3em;
   }
   
   .slogan-pc {
-    width: 120px;
+    width: 110px;
   }
   
   .care-photo-pc {
-    max-width: 420px;
-    height: 230px;
+    max-width: 400px;
   }
 }
 </style>
 
-// 强制刷新版本 v3.25 - 毛笔字体 · 中国风设计 · 思政标语优化
+// 强制刷新版本 v3.26 - 毛笔字体 · 中国风设计 · 思政标语优化
