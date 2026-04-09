@@ -92,7 +92,7 @@
       <div class="bg-blue-600 text-white p-4">
         <div class="flex justify-between items-center max-w-4xl mx-auto">
           <div>
-            <h1 class="text-lg font-bold">康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.22</span></h1>
+            <h1 class="text-lg font-bold">康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded">v3.23</span></h1>
             <p class="text-sm text-blue-200">{{ currentUser.name }} ({{ currentUser.role === 'admin' ? '管理员' : currentUser.role === 'teacher' ? '老师' : '学生' }})</p>
           </div>
           <button @click="logout" class="text-sm bg-blue-500 px-3 py-1 rounded hover:bg-blue-400">退出</button>
@@ -105,6 +105,138 @@
         <div v-if="currentUser.role === 'student'">
           <!-- 步骤指示器 -->
           <div v-if="currentStep === 'home'" class="space-y-4">
+            <!-- 顶部横幅：思政标语+护理场景 -->
+            <div class="flex gap-4">
+              <!-- 思政标语 -->
+              <div class="bg-gradient-to-r from-red-50 to-pink-50 rounded-xl p-6 shadow flex items-center justify-center" style="writing-mode: vertical-rl; width: 60px;">
+                <div class="text-center">
+                  <p class="text-2xl font-bold text-red-600" style="font-family: 'KaiTi', 'STKaiti', 'STXingkai', serif;">老吾老</p>
+                  <p class="text-2xl font-bold text-red-600" style="font-family: 'KaiTi', 'STKaiti', 'STXingkai', serif;">及人之老</p>
+                </div>
+              </div>
+              
+              <!-- 护理场景图片 -->
+              <div class="flex-1 bg-gradient-to-br from-blue-100 via-green-50 to-teal-100 rounded-xl p-4 shadow relative overflow-hidden" style="min-height: 180px;">
+                <svg viewBox="0 0 400 160" class="w-full h-full">
+                  <!-- 背景：阳光 -->
+                  <defs>
+                    <radialGradient id="sunGrad" cx="85%" cy="15%" r="20%">
+                      <stop offset="0%" stop-color="#FFE066"/>
+                      <stop offset="100%" stop-color="#FFF9DB"/>
+                    </radialGradient>
+                    <linearGradient id="grassGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stop-color="#7CB342"/>
+                      <stop offset="100%" stop-color="#558B2F"/>
+                    </linearGradient>
+                  </defs>
+                  
+                  <!-- 太阳光芒 -->
+                  <circle cx="340" cy="30" r="25" fill="url(#sunGrad)"/>
+                  <g stroke="#FFE066" stroke-width="2" opacity="0.6">
+                    <line x1="340" y1="0" x2="340" y2="5"/>
+                    <line x1="365" y1="15" x2="360" y2="20"/>
+                    <line x1="375" y1="30" x2="370" y2="30"/>
+                    <line x1="365" y1="45" x2="360" y2="40"/>
+                    <line x1="315" y1="15" x2="320" y2="20"/>
+                    <line x1="305" y1="30" x2="310" y2="30"/>
+                    <line x1="315" y1="45" x2="320" y2="40"/>
+                  </g>
+                  
+                  <!-- 地面/草地 -->
+                  <rect x="0" y="120" width="400" height="40" fill="url(#grassGrad)"/>
+                  <ellipse cx="50" cy="122" rx="15" ry="5" fill="#8BC34A"/>
+                  <ellipse cx="150" cy="125" rx="20" ry="6" fill="#9CCC65"/>
+                  <ellipse cx="280" cy="123" rx="18" ry="5" fill="#8BC34A"/>
+                  
+                  <!-- 树木 -->
+                  <rect x="25" y="80" width="10" height="45" fill="#6D4C41"/>
+                  <circle cx="30" cy="65" r="25" fill="#4CAF50"/>
+                  <circle cx="20" cy="75" r="15" fill="#66BB6A"/>
+                  <circle cx="40" cy="70" r="18" fill="#81C784"/>
+                  
+                  <rect x="360" y="90" width="8" height="35" fill="#6D4C41"/>
+                  <circle cx="364" cy="78" r="18" fill="#4CAF50"/>
+                  <circle cx="355" cy="85" r="12" fill="#66BB6A"/>
+                  
+                  <!-- 轮椅 -->
+                  <g transform="translate(160, 85)">
+                    <!-- 轮椅底座 -->
+                    <rect x="0" y="20" width="60" height="8" rx="2" fill="#455A64"/>
+                    <!-- 轮椅靠背 -->
+                    <path d="M 10 20 L 10 -15 Q 15 -20 20 -15 L 20 20" fill="none" stroke="#37474F" stroke-width="3"/>
+                    <!-- 轮椅座垫 -->
+                    <rect x="15" y="10" width="35" height="8" rx="2" fill="#607D8B"/>
+                    <!-- 后轮 -->
+                    <circle cx="10" cy="28" r="12" fill="none" stroke="#37474F" stroke-width="3"/>
+                    <circle cx="10" cy="28" r="2" fill="#37474F"/>
+                    <!-- 前轮 -->
+                    <circle cx="50" cy="28" r="6" fill="none" stroke="#37474F" stroke-width="2"/>
+                    <circle cx="50" cy="28" r="1.5" fill="#37474F"/>
+                    <!-- 扶手 -->
+                    <rect x="20" y="5" width="25" height="3" rx="1" fill="#78909C"/>
+                  </g>
+                  
+                  <!-- 老人（坐在轮椅上） -->
+                  <g transform="translate(175, 55)">
+                    <!-- 头部 -->
+                    <circle cx="15" cy="8" r="12" fill="#FFCCBC"/>
+                    <!-- 头发 -->
+                    <path d="M 5 5 Q 15 -5 25 5" fill="#E0E0E0"/>
+                    <!-- 眼睛 -->
+                    <circle cx="11" cy="7" r="1.5" fill="#37474F"/>
+                    <circle cx="19" cy="7" r="1.5" fill="#37474F"/>
+                    <!-- 微笑 -->
+                    <path d="M 11 12 Q 15 15 19 12" fill="none" stroke="#D87A68" stroke-width="1"/>
+                    <!-- 身体 -->
+                    <rect x="5" y="18" width="20" height="20" rx="3" fill="#5C6BC0"/>
+                    <!-- 围巾 -->
+                    <rect x="3" y="18" width="24" height="4" rx="2" fill="#EF5350"/>
+                    <!-- 手 -->
+                    <ellipse cx="25" cy="30" rx="4" ry="3" fill="#FFCCBC"/>
+                  </g>
+                  
+                  <!-- 护理员 -->
+                  <g transform="translate(110, 50)">
+                    <!-- 头部 -->
+                    <circle cx="15" cy="10" r="11" fill="#FFE0B2"/>
+                    <!-- 头发 -->
+                    <path d="M 5 8 Q 15 -2 25 8" fill="#5D4037"/>
+                    <ellipse cx="15" cy="5" rx="10" ry="5" fill="#5D4037"/>
+                    <!-- 眼睛 -->
+                    <circle cx="11" cy="9" r="1.5" fill="#37474F"/>
+                    <circle cx="19" cy="9" r="1.5" fill="#37474F"/>
+                    <!-- 微笑 -->
+                    <path d="M 11 14 Q 15 17 19 14" fill="none" stroke="#D87A68" stroke-width="1"/>
+                    <!-- 身体/护士服 -->
+                    <rect x="5" y="20" width="20" height="30" rx="2" fill="#E3F2FD"/>
+                    <!-- 护士帽 -->
+                    <path d="M 8 0 L 22 0 L 20 5 L 10 5 Z" fill="#FFFFFF" stroke="#90CAF9" stroke-width="0.5"/>
+                    <!-- 十字 -->
+                    <rect x="13" y="25" width="4" height="12" fill="#2196F3"/>
+                    <rect x="9" y="29" width="12" height="4" fill="#2196F3"/>
+                    <!-- 推轮椅的手 -->
+                    <ellipse cx="30" cy="42" rx="4" ry="3" fill="#FFE0B2"/>
+                  </g>
+                  
+                  <!-- 温馨元素：爱心 -->
+                  <g transform="translate(280, 60)">
+                    <path d="M 0 5 C 0 0 -5 0 -5 -3 C -5 -7 0 -10 0 -10 C 0 -10 5 -7 5 -3 C 5 0 0 0 0 5" fill="#E91E63" opacity="0.7"/>
+                  </g>
+                  <g transform="translate(300, 50)">
+                    <path d="M 0 4 C 0 0 -4 0 -4 -2 C -4 -5 0 -8 0 -8 C 0 -8 4 -5 4 -2 C 4 0 0 0 0 4" fill="#E91E63" opacity="0.5"/>
+                  </g>
+                  
+                  <!-- 温馨元素：音符 -->
+                  <text x="250" y="45" font-size="16" fill="#7E57C2" opacity="0.6">♪</text>
+                  <text x="330" y="60" font-size="12" fill="#7E57C2" opacity="0.5">♫</text>
+                </svg>
+                <div class="absolute bottom-2 right-3 text-xs text-green-700 bg-white/70 px-2 py-1 rounded">
+                  🌤️ 沐浴阳光 温馨陪伴
+                </div>
+              </div>
+            </div>
+            
+            <!-- 开始练习卡片 -->
             <div class="bg-white rounded-xl p-6 shadow">
               <h2 class="text-xl font-bold mb-4">开始练习</h2>
               <p class="text-gray-500 mb-4">输入老人画像，AI将自动生成病例和对话场景</p>
@@ -446,16 +578,16 @@
           <div v-else-if="currentStep === 'chat'" class="flex h-[calc(100vh-120px)] gap-4">
             <!-- 病例信息卡片（左侧） -->
             <div class="w-72 flex-shrink-0">
-              <div class="bg-white rounded-xl shadow p-4 h-full overflow-y-auto">
-                <h3 class="font-bold text-blue-600 mb-3 flex items-center">
+              <div class="bg-white rounded-xl shadow p-3 h-full overflow-y-auto">
+                <h3 class="font-bold text-blue-600 mb-2 flex items-center text-sm">
                   <span>📋</span> 病例信息
                 </h3>
                 
-                <div class="space-y-3 text-sm">
+                <div class="space-y-2 text-xs">
                   <!-- 基本信息 -->
-                  <div class="bg-blue-50 rounded-lg p-3">
-                    <p class="font-medium text-blue-800 mb-2">基本信息</p>
-                    <div class="space-y-1 text-gray-700">
+                  <div class="bg-blue-50 rounded-lg p-2">
+                    <p class="font-medium text-blue-800 mb-1">基本信息</p>
+                    <div class="space-y-0.5 text-gray-700">
                       <p><span class="text-gray-500">姓名：</span>{{ generatedCase.basicInfo?.name }}</p>
                       <p><span class="text-gray-500">年龄：</span>{{ generatedCase.basicInfo?.age }}岁</p>
                       <p><span class="text-gray-500">性别：</span>{{ generatedCase.basicInfo?.gender }}</p>
@@ -464,16 +596,16 @@
                   </div>
                   
                   <!-- 病史信息 -->
-                  <div class="bg-orange-50 rounded-lg p-3">
-                    <p class="font-medium text-orange-800 mb-2">疾病情况</p>
-                    <div class="space-y-1 text-gray-700">
-                      <p><span class="text-gray-500">主诉：</span>{{ generatedCase.medicalHistory?.chiefComplaint }}</p>
+                  <div class="bg-orange-50 rounded-lg p-2">
+                    <p class="font-medium text-orange-800 mb-1">疾病情况</p>
+                    <div class="space-y-0.5 text-gray-700">
+                      <p class="truncate"><span class="text-gray-500">主诉：</span>{{ generatedCase.medicalHistory?.chiefComplaint }}</p>
                       <!-- 用药信息详细显示 -->
-                      <div v-if="generatedCase.medicalHistory?.medications?.length" class="mt-2">
-                        <p class="text-gray-500 text-xs">用药：</p>
-                        <div v-for="med in generatedCase.medicalHistory.medications" :key="med.disease" class="mb-1">
-                          <p class="text-xs font-medium text-orange-700">{{ med.disease }}：</p>
-                          <div v-for="drug in med.drugs" :key="drug.name" class="text-xs text-gray-600 ml-2">
+                      <div v-if="generatedCase.medicalHistory?.medications?.length" class="mt-1">
+                        <p class="text-gray-500">用药：</p>
+                        <div v-for="med in generatedCase.medicalHistory.medications" :key="med.disease" class="mb-0.5">
+                          <p class="font-medium text-orange-700">{{ med.disease }}：</p>
+                          <div v-for="drug in med.drugs" :key="drug.name" class="text-gray-600 ml-2">
                             • {{ drug.name }} {{ drug.spec }}
                           </div>
                         </div>
@@ -482,39 +614,39 @@
                   </div>
                   
                   <!-- 性格特点 -->
-                  <div class="bg-green-50 rounded-lg p-3">
-                    <p class="font-medium text-green-800 mb-2">性格特点</p>
-                    <div class="space-y-1 text-gray-700">
+                  <div class="bg-green-50 rounded-lg p-2">
+                    <p class="font-medium text-green-800 mb-1">性格特点</p>
+                    <div class="text-gray-700 text-xs">
                       <p>{{ Array.isArray(generatedCase.personality?.traits) ? generatedCase.personality?.traits?.join('、') : generatedCase.personality?.traits }}</p>
-                      <p class="text-xs text-gray-500 mt-1">关注：{{ Array.isArray(generatedCase.personality?.concerns) ? generatedCase.personality?.concerns?.join('、') : generatedCase.personality?.concerns }}</p>
+                      <p class="text-gray-500 mt-0.5">关注：{{ Array.isArray(generatedCase.personality?.concerns) ? generatedCase.personality?.concerns?.join('、') : generatedCase.personality?.concerns }}</p>
                     </div>
                   </div>
                   
                   <!-- 智能设备报警 -->
-                  <div v-if="generatedCase.deviceAlert" class="bg-red-50 rounded-lg p-3 border border-red-300">
-                    <p class="font-medium text-red-700 mb-1">🚨 设备报警</p>
-                    <p class="text-xs text-red-600">{{ generatedCase.deviceAlert }}</p>
+                  <div v-if="generatedCase.deviceAlert" class="bg-red-50 rounded-lg p-2 border border-red-300">
+                    <p class="font-medium text-red-700 text-xs">🚨 设备报警</p>
+                    <p class="text-red-600 text-xs">{{ generatedCase.deviceAlert }}</p>
                   </div>
                   
                   <!-- 居住情况 -->
-                  <div class="bg-purple-50 rounded-lg p-3">
-                    <p class="font-medium text-purple-800 mb-2">居住情况</p>
-                    <div class="space-y-1 text-gray-700">
+                  <div class="bg-purple-50 rounded-lg p-2">
+                    <p class="font-medium text-purple-800 mb-1">居住情况</p>
+                    <div class="text-gray-700 text-xs space-y-0.5">
                       <p><span class="text-gray-500">场所：</span>{{ generatedCase.basicInfo?.livingPlace || caseProfile.livingPlace }}</p>
                       <p><span class="text-gray-500">类型：</span>{{ generatedCase.basicInfo?.familyStatus || (Array.isArray(caseProfile.livingTypes) ? caseProfile.livingTypes?.join('、') : caseProfile.livingTypes) }}</p>
                     </div>
                   </div>
                   
                   <!-- 方言 -->
-                  <div class="bg-gray-50 rounded-lg p-3">
-                    <p class="font-medium text-gray-800 mb-1">方言偏好</p>
-                    <p class="text-gray-600">{{ caseProfile.dialect }}</p>
+                  <div class="bg-gray-50 rounded-lg p-2">
+                    <p class="font-medium text-gray-800 mb-0.5">方言偏好</p>
+                    <p class="text-gray-600 text-xs">{{ caseProfile.dialect }}</p>
                   </div>
                   
                   <!-- 爱好 -->
-                  <div class="bg-gray-50 rounded-lg p-3">
-                    <p class="font-medium text-gray-800 mb-1">兴趣爱好</p>
-                    <p class="text-gray-600">{{ Array.isArray(generatedCase.basicInfo?.hobby) ? generatedCase.basicInfo?.hobby?.join('、') : (generatedCase.basicInfo?.hobby || (Array.isArray(caseProfile.hobbies) ? caseProfile.hobbies?.join('、') : caseProfile.hobbies)) }}</p>
+                  <div class="bg-gray-50 rounded-lg p-2">
+                    <p class="font-medium text-gray-800 mb-0.5">兴趣爱好</p>
+                    <p class="text-gray-600 text-xs">{{ Array.isArray(generatedCase.basicInfo?.hobby) ? generatedCase.basicInfo?.hobby?.join('、') : (generatedCase.basicInfo?.hobby || (Array.isArray(caseProfile.hobbies) ? caseProfile.hobbies?.join('、') : caseProfile.hobbies)) }}</p>
                   </div>
                 </div>
               </div>
@@ -560,7 +692,7 @@
                   @keyup.enter.ctrl="sendMessage"
                   placeholder="输入消息...（Ctrl+Enter发送）"
                   class="flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
-                  rows="3"
+                  rows="4"
                   :disabled="isTyping"
                 ></textarea>
                 <button 
@@ -1239,7 +1371,7 @@ const diseases = [
   '慢性支气管炎', '肺气肿', '胃溃疡', '慢性胃炎',
   '白内障', '青光眼', '前列腺增生', '失眠症',
   '抑郁症', '焦虑症', '类风湿', '痛风',
-  '高烧', '咳嗽', '高血脂', '擦伤',
+  '咳嗽', '高血脂',
   '心脏骤停', '左侧偏瘫', '右侧偏瘫', '记忆力减退'
 ]
 
@@ -1764,7 +1896,7 @@ ${currentEmergency ? `- 突发事件：${currentEmergency}` : ''}
     "concerns": ["关心的问题"],
     "communicationStyle": "沟通风格"
   },
-  "deviceAlert": "智能设备报警内容（模拟智能手环或监控设备向平台发送的报警信息，如：'检测到老人跌倒，位置：客厅，时间：14:32'，如果没有突发事件则返回空字符串）",
+  "deviceAlert": "${currentEmergency ? `智能设备报警内容（模拟智能手环或监控设备向平台发送的报警信息，如：'检测到老人${currentEmergency}，位置：客厅，时间：14:32'）` : '普通日常情况，无需设备报警，返回空字符串'}",
   "openingLine": "老人的开场白（要自然，符合老人身份和疾病情况，称呼对方为护理员${currentEmergency ? '，如果是突发事件场景，开场白要体现紧急情况' : ''}）"
 }
 
@@ -1828,7 +1960,8 @@ ${currentEmergency ? `- 突发事件：${currentEmergency}` : ''}
         concerns: ['健康问题', '子女关心'],
         communicationStyle: caseProfile.dialect === '普通话' ? '标准普通话' : `带${caseProfile.dialect}口音`
       },
-      openingLine: '护理员，我最近总是头晕，你帮我看看吧。'
+      deviceAlert: ${currentEmergency ? `'检测到老人${currentEmergency}，位置：客厅，时间：14:32'` : '""'},
+      openingLine: ${currentEmergency ? `'护理员，我好像${currentEmergency}了，快来帮帮我！'` : `'护理员，我最近总是头晕，你帮我看看吧。'`}
     }
     currentStep.value = 'case'
   } finally {
@@ -2416,8 +2549,8 @@ ${chatHistory}
   "feedback": "整体评价（50字以内）",
   "strengths": ["具体优点1", "具体优点2"],
   "weaknesses": ["具体不足1", "具体不足2"],
-  "improvements": ["具体建议1", "具体建议2"],
-  "referenceAnswer": "针对该老人情况的理想沟通参考答案，包含四个维度的合理化建议，300字以内"
+  "improvements": ["具体建议1", "具体建议2", "建议了解并使用智能手环、智能床垫等智慧化设备监测老人状态"],
+  "referenceAnswer": "针对该老人情况的理想沟通参考答案，包含四个维度的合理化建议，以及智慧化设备（如智能手环、智能床垫、跌倒报警器等）的使用建议，350字以内"
 }`
 
     const response = await fetch(EDGE_FUNCTION_URL, {
