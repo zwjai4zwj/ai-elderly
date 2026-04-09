@@ -1359,7 +1359,7 @@ const caseProfile = reactive({
 })
 
 const customEmergency = ref('')
-const emergencyOptions = ['噎食', '心脏骤停', '跌倒', '走失', '擦伤', '褥疮', '高烧']
+const emergencyOptions = ['噎食', '心脏骤停', '跌倒', '走失', '擦伤', '褥疮', '高烧', '痰液窒息']
 
 const livingTypeOptions = ['独居', '丧偶', '有老伴', '无儿女', '儿女在外地']
 const economicTypeOptions = ['无收入', '有退休金', '有商业保险', '儿女赡养']
