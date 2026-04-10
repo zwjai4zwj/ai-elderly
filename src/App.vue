@@ -1393,7 +1393,6 @@ const selectedTeacherClass = ref(null)
 const selectedStudent = ref(null)
 const studentRecords = ref([])
 const allRecords = ref([]) // 所有练习记录
-const expandedClassId = ref(null) // 展开的班级ID
 const assigningClassId = ref(null) // 正在分配教师的班级ID
 
 // 老师负责的班级（支持多个教师管理同一个班级）
