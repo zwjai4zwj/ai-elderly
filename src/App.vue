@@ -778,42 +778,42 @@
                 </div>
                 
                 <!-- 班级展开后的详细分析 -->
-                <div v-if="selectedTeacherClass === cls.id" class="p-4 bg-white">
+                <div v-if="selectedTeacherClass === cls.id" class="p-2 sm:p-4 bg-white">
                   <!-- 班级整体统计 -->
-                  <div class="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
-                    <h4 class="font-bold text-blue-800 mb-3">📊 班级整体情况</h4>
-                    <div class="grid grid-cols-5 gap-3 text-center">
+                  <div class="mb-4 p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+                    <h4 class="font-bold text-blue-800 mb-3 text-sm sm:text-base">📊 班级整体情况</h4>
+                    <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3 text-center">
                       <div class="bg-white rounded-lg p-2 shadow-sm">
-                        <p class="text-2xl font-bold text-blue-600">{{ getClassStats(cls.id)?.studentCount || 0 }}</p>
+                        <p class="text-xl sm:text-2xl font-bold text-blue-600">{{ getClassStats(cls.id)?.studentCount || 0 }}</p>
                         <p class="text-xs text-gray-500">学生人数</p>
                       </div>
                       <div class="bg-white rounded-lg p-2 shadow-sm">
-                        <p class="text-2xl font-bold text-green-600">{{ getClassStats(cls.id)?.totalPractices || 0 }}</p>
-                        <p class="text-xs text-gray-500">练习总次数</p>
+                        <p class="text-xl sm:text-2xl font-bold text-green-600">{{ getClassStats(cls.id)?.totalPractices || 0 }}</p>
+                        <p class="text-xs text-gray-500">练习次数</p>
                       </div>
                       <div class="bg-white rounded-lg p-2 shadow-sm">
-                        <p class="text-2xl font-bold text-orange-600">{{ getClassStats(cls.id)?.avgScore || '--' }}</p>
-                        <p class="text-xs text-gray-500">班级平均分</p>
+                        <p class="text-xl sm:text-2xl font-bold text-orange-600">{{ getClassStats(cls.id)?.avgScore || '--' }}</p>
+                        <p class="text-xs text-gray-500">平均分</p>
                       </div>
                       <div class="bg-white rounded-lg p-2 shadow-sm">
-                        <p class="text-xl font-bold text-purple-600">{{ getClassStats(cls.id)?.highestScore || '--' }}</p>
-                        <p class="text-xs text-gray-500">最高分（{{ getClassStats(cls.id)?.highestScoreStudent || '暂无' }}）</p>
+                        <p class="text-lg sm:text-xl font-bold text-purple-600">{{ getClassStats(cls.id)?.highestScore || '--' }}</p>
+                        <p class="text-xs text-gray-500">最高分</p>
                       </div>
-                      <div class="bg-white rounded-lg p-2 shadow-sm">
-                        <p class="text-xl font-bold text-red-600">{{ getClassStats(cls.id)?.lowestScore || '--' }}</p>
-                        <p class="text-xs text-gray-500">最低分（{{ getClassStats(cls.id)?.lowestScoreStudent || '暂无' }}）</p>
+                      <div class="bg-white rounded-lg p-2 shadow-sm col-span-3 sm:col-span-1">
+                        <p class="text-lg sm:text-xl font-bold text-red-600">{{ getClassStats(cls.id)?.lowestScore || '--' }}</p>
+                        <p class="text-xs text-gray-500">最低分</p>
                       </div>
                     </div>
                   </div>
                   
                   <!-- 四维度分析 -->
-                  <div v-if="getClassStats(cls.id)?.dimensionStats" class="mb-4 p-4 bg-gray-50 rounded-lg">
-                    <h4 class="font-bold text-gray-700 mb-3">📈 四维度能力分析</h4>
-                    <div class="grid grid-cols-2 gap-3">
-                      <div class="bg-white rounded-lg p-3">
+                  <div v-if="getClassStats(cls.id)?.dimensionStats" class="mb-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
+                    <h4 class="font-bold text-gray-700 mb-3 text-sm sm:text-base">📈 四维度能力分析</h4>
+                    <div class="grid grid-cols-2 gap-2 sm:gap-3">
+                      <div class="bg-white rounded-lg p-2 sm:p-3">
                         <div class="flex justify-between items-center">
-                          <span class="text-gray-600">思政维度</span>
-                          <span class="font-bold" :class="getDimensionClass(getClassStats(cls.id).dimensionStats.sizheng.avg)">
+                          <span class="text-gray-600 text-xs sm:text-sm">思政维度</span>
+                          <span class="font-bold text-sm sm:text-base" :class="getDimensionClass(getClassStats(cls.id).dimensionStats.sizheng.avg)">
                             {{ getClassStats(cls.id).dimensionStats.sizheng.avg }}分
                           </span>
                         </div>
@@ -822,10 +822,10 @@
                                :style="{width: getClassStats(cls.id).dimensionStats.sizheng.avg + '%'}"></div>
                         </div>
                       </div>
-                      <div class="bg-white rounded-lg p-3">
+                      <div class="bg-white rounded-lg p-2 sm:p-3">
                         <div class="flex justify-between items-center">
-                          <span class="text-gray-600">心理慰藉</span>
-                          <span class="font-bold" :class="getDimensionClass(getClassStats(cls.id).dimensionStats.xinli.avg)">
+                          <span class="text-gray-600 text-xs sm:text-sm">心理慰藉</span>
+                          <span class="font-bold text-sm sm:text-base" :class="getDimensionClass(getClassStats(cls.id).dimensionStats.xinli.avg)">
                             {{ getClassStats(cls.id).dimensionStats.xinli.avg }}分
                           </span>
                         </div>
@@ -834,10 +834,10 @@
                                :style="{width: getClassStats(cls.id).dimensionStats.xinli.avg + '%'}"></div>
                         </div>
                       </div>
-                      <div class="bg-white rounded-lg p-3">
+                      <div class="bg-white rounded-lg p-2 sm:p-3">
                         <div class="flex justify-between items-center">
-                          <span class="text-gray-600">健康宣教</span>
-                          <span class="font-bold" :class="getDimensionClass(getClassStats(cls.id).dimensionStats.jiankang.avg)">
+                          <span class="text-gray-600 text-xs sm:text-sm">健康宣教</span>
+                          <span class="font-bold text-sm sm:text-base" :class="getDimensionClass(getClassStats(cls.id).dimensionStats.jiankang.avg)">
                             {{ getClassStats(cls.id).dimensionStats.jiankang.avg }}分
                           </span>
                         </div>
@@ -846,10 +846,10 @@
                                :style="{width: getClassStats(cls.id).dimensionStats.jiankang.avg + '%'}"></div>
                         </div>
                       </div>
-                      <div class="bg-white rounded-lg p-3">
+                      <div class="bg-white rounded-lg p-2 sm:p-3">
                         <div class="flex justify-between items-center">
-                          <span class="text-gray-600">康复训练</span>
-                          <span class="font-bold" :class="getDimensionClass(getClassStats(cls.id).dimensionStats.kangfu.avg)">
+                          <span class="text-gray-600 text-xs sm:text-sm">康复训练</span>
+                          <span class="font-bold text-sm sm:text-base" :class="getDimensionClass(getClassStats(cls.id).dimensionStats.kangfu.avg)">
                             {{ getClassStats(cls.id).dimensionStats.kangfu.avg }}分
                           </span>
                         </div>
