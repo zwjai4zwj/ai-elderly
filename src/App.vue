@@ -1025,14 +1025,39 @@
               
               <div class="mt-4">
                 <p class="text-sm text-gray-500 mb-2">已有班级（点击班级名查看学生）</p>
-                <div v-for="cls in classes" :key="cls.id" class="mb-1">
-                  <div class="p-2 bg-gray-50 rounded text-sm flex justify-between items-center">
-                    <span class="cursor-pointer hover:text-blue-600 font-medium" @click="expandedClassId = expandedClassId === cls.id ? null : cls.id">
-                      {{ cls.name }} ({{ (classStudentsMap[cls.id] || []).length }}人)
-                    </span>
-                    <button @click="deleteClass(cls.id)" class="text-red-500 hover:text-red-700 text-xs">删除</button>
+                <div v-for="cls in classes" :key="cls.id" class="mb-2">
+                  <div class="p-2 bg-gray-50 rounded text-sm">
+                    <div class="flex justify-between items-center">
+                      <span class="cursor-pointer hover:text-blue-600 font-medium" @click="expandedClassId = expandedClassId === cls.id ? null : cls.id">
+                        {{ cls.name }} ({{ (classStudentsMap[cls.id] || []).length }}人)
+                      </span>
+                      <div class="flex gap-2">
+                        <button @click="assigningClassId = assigningClassId === cls.id ? null : cls.id" class="text-blue-500 hover:text-blue-700 text-xs">分配教师</button>
+                        <button @click="deleteClass(cls.id)" class="text-red-500 hover:text-red-700 text-xs">删除</button>
+                      </div>
+                    </div>
+                    <!-- 显示已分配的教师 -->
+                    <div v-if="cls.teacher_ids && cls.teacher_ids.length > 0" class="mt-1 text-xs text-gray-500">
+                      已分配教师：{{ cls.teacher_ids.map(tid => teachers.find(t => t.id === tid)?.name || '未知').join('、') }}
+                    </div>
                   </div>
-                  <div v-if="expandedClassId === cls.id" class="pl-4 py-2 bg-blue-50 rounded mt-1 text-xs">
+                  <!-- 分配教师面板 -->
+                  <div v-if="assigningClassId === cls.id" class="pl-4 py-2 bg-blue-50 rounded mt-1 text-xs">
+                    <p class="font-medium mb-2">选择要分配的教师：</p>
+                    <div v-for="t in teachers" :key="t.id" class="py-1 flex justify-between items-center border-b border-gray-200 last:border-0">
+                      <span>{{ t.name }}</span>
+                      <button 
+                        @click="assignTeacherToClass(cls.id, t.id)"
+                        :class="cls.teacher_ids && cls.teacher_ids.includes(t.id) ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'"
+                        class="px-2 py-0.5 rounded text-xs"
+                      >
+                        {{ cls.teacher_ids && cls.teacher_ids.includes(t.id) ? '已分配 ✓' : '分配' }}
+                      </button>
+                    </div>
+                    <div v-if="teachers.length === 0" class="text-gray-400 py-1">暂无教师，请先创建教师账号</div>
+                  </div>
+                  <!-- 学生列表 -->
+                  <div v-if="expandedClassId === cls.id && assigningClassId !== cls.id" class="pl-4 py-2 bg-blue-50 rounded mt-1 text-xs">
                     <div v-if="(classStudentsMap[cls.id] || []).length === 0" class="text-gray-400 py-1">暂无学生</div>
                     <div v-else>
                       <div v-for="s in classStudentsMap[cls.id]" :key="s.id" class="py-1 flex justify-between border-b border-gray-200 last:border-0">
@@ -1368,11 +1393,24 @@ const selectedTeacherClass = ref(null)
 const selectedStudent = ref(null)
 const studentRecords = ref([])
 const allRecords = ref([]) // 所有练习记录
+const expandedClassId = ref(null) // 展开的班级ID
+const assigningClassId = ref(null) // 正在分配教师的班级ID
 
-// 老师负责的班级
+// 老师负责的班级（支持多个教师管理同一个班级）
 const teacherClasses = computed(() => {
-  if (!currentUser.value.class_id) return []
-  return classes.value.filter(c => c.id === currentUser.value.class_id)
+  if (!currentUser.value.id) return []
+  // 检查班级的 teacher_ids 数组是否包含当前教师ID
+  return classes.value.filter(c => {
+    // 兼容旧数据：如果班级有 teacher_ids 字段，检查数组
+    if (c.teacher_ids && Array.isArray(c.teacher_ids)) {
+      return c.teacher_ids.includes(currentUser.value.id)
+    }
+    // 兼容旧数据：如果教师有 class_id 字段
+    if (currentUser.value.class_id && c.id === currentUser.value.class_id) {
+      return true
+    }
+    return false
+  })
 })
 
 // 练习历史
@@ -2608,7 +2646,8 @@ async function createClass() {
     .insert({ 
       name: newClass.name,
       code: code,
-      student_count: 0
+      student_count: 0,
+      teacher_ids: [] // 支持多个教师管理
     })
     .select()
   
@@ -2618,6 +2657,37 @@ async function createClass() {
     newClass.name = ''
   } else if (error) {
     alert('创建失败：' + error.message)
+  }
+}
+
+// 分配教师到班级
+async function assignTeacherToClass(classId, teacherId) {
+  const cls = classes.value.find(c => c.id === classId)
+  if (!cls) return
+  
+  // 获取当前的 teacher_ids，如果没有则初始化为空数组
+  let teacherIds = cls.teacher_ids || []
+  
+  // 如果教师已经在列表中，则移除；否则添加
+  if (teacherIds.includes(teacherId)) {
+    teacherIds = teacherIds.filter(id => id !== teacherId)
+  } else {
+    teacherIds = [...teacherIds, teacherId]
+  }
+  
+  const { error } = await supabase
+    .from('classes')
+    .update({ teacher_ids: teacherIds })
+    .eq('id', classId)
+  
+  if (!error) {
+    // 更新本地数据
+    const index = classes.value.findIndex(c => c.id === classId)
+    if (index !== -1) {
+      classes.value[index].teacher_ids = teacherIds
+    }
+  } else {
+    alert('分配失败：' + error.message)
   }
 }
 
