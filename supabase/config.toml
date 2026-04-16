@@ -1,0 +1,5 @@
+# Supabase配置
+project_id = "todnsmeovkpmniqcwucm"
+
+[functions.chat]
+verify_jwt = false
