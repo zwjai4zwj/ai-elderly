@@ -1896,13 +1896,28 @@ const expandedClassId = ref(null)
 
 // 班级学生映射
 const classStudentsMap = computed(() => {
+  console.log('📋 classStudentsMap 计算中...')
+  console.log('📋 students.value:', students.value)
+  console.log('📋 classes.value:', classes.value)
+  
   const map = {}
   students.value.forEach(s => {
-    if (s.class_id) {
-      if (!map[s.class_id]) map[s.class_id] = []
-      map[s.class_id].push(s)
+    // 转换为字符串进行比较，确保类型一致
+    const studentClassId = String(s.class_id)
+    console.log('📋 学生:', s.name, 'class_id:', s.class_id, '类型:', typeof s.class_id)
+    
+    if (studentClassId && studentClassId !== 'null' && studentClassId !== 'undefined') {
+      // 查找匹配的班级
+      const matchedClass = classes.value.find(c => String(c.id) === studentClassId || c.id == studentClassId)
+      console.log('📋 匹配班级:', matchedClass ? matchedClass.name : '未找到')
+      
+      if (matchedClass) {
+        if (!map[matchedClass.id]) map[matchedClass.id] = []
+        map[matchedClass.id].push(s)
+      }
     }
   })
+  console.log('📋 classStudentsMap 结果:', map)
   return map
 })
 
