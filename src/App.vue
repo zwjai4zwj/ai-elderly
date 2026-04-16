@@ -4612,6 +4612,7 @@ async function viewStudentDetail(student) {
 
 // 加载教师发布的案例
 async function loadCases() {
+  console.log('🚀 loadCases 被调用!')
   const { data } = await supabase
     .from('cases')
     .select('*')
