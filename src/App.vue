@@ -98,9 +98,10 @@
             class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <select v-model="registerForm.classId" class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="">选择班级（可选）</option>
+            <option value="">选择班级（必选）</option>
             <option v-for="cls in classes" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
           </select>
+          <p v-if="registerForm.classId === ''" class="text-xs text-orange-500 -mt-2">请选择班级才能注册</p>
           <button 
             @click="register" 
             :disabled="isRegistering"
@@ -1071,6 +1072,7 @@
                       <tr class="bg-gray-100">
                         <th class="border px-3 py-2 text-left">排名</th>
                         <th class="border px-3 py-2 text-left">学生</th>
+                        <th class="border px-3 py-2 text-left">班级</th>
                         <th class="border px-3 py-2 text-center">练习次数</th>
                         <th class="border px-3 py-2 text-center">总分</th>
                         <th class="border px-3 py-2 text-center">最高分</th>
@@ -1086,6 +1088,7 @@
                       <tr v-for="(student, index) in getCaseStudentRankings()" :key="student.id" class="hover:bg-gray-50">
                         <td class="border px-3 py-2 font-bold">{{ index + 1 }}</td>
                         <td class="border px-3 py-2">{{ student.name }}</td>
+                        <td class="border px-3 py-2 text-sm text-gray-500">{{ student.class_name || '-' }}</td>
                         <td class="border px-3 py-2 text-center">{{ student.totalPractices }}</td>
                         <td class="border px-3 py-2 text-center font-bold" :class="getScoreClass(student.avgScore)">{{ student.avgScore }}</td>
                         <td class="border px-3 py-2 text-center text-green-600">{{ student.highestScore }}</td>
@@ -1607,11 +1610,35 @@
                     <span class="text-sm text-gray-400 ml-2">{{ student.email }}</span>
                   </div>
                   <div class="flex items-center gap-2">
-                    <span class="text-sm text-gray-500">{{ student.class_name }}</span>
+                    <select 
+                      v-if="adjustingStudentId === student.id"
+                      v-model="newClassId" 
+                      @change="confirmAdjustClass(student.id)"
+                      class="px-2 py-1 border rounded text-sm"
+                    >
+                      <option value="">选择班级</option>
+                      <option v-for="cls in classes" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
+                    </select>
+                    <span v-else class="text-sm text-gray-500">{{ student.class_name || '未分配' }}</span>
+                    <button 
+                      v-if="adjustingStudentId !== student.id"
+                      @click="startAdjustClass(student.id, student.class_id)" 
+                      class="text-blue-500 hover:text-blue-700 text-sm"
+                    >
+                      调班
+                    </button>
+                    <button 
+                      v-if="adjustingStudentId === student.id"
+                      @click="cancelAdjustClass" 
+                      class="text-gray-500 hover:text-gray-700 text-sm"
+                    >
+                      取消
+                    </button>
                     <button @click="deleteStudent(student.id)" class="text-red-500 hover:text-red-700 text-sm">删除</button>
                   </div>
                 </div>
               </div>
+              <p class="text-xs text-gray-400 mt-2">点击"调班"可调整学生所属班级</p>
             </div>
           </div>
           
@@ -1833,6 +1860,9 @@ const userInput = ref('')
 const isGenerating = ref(false)
 const isTyping = ref(false)
 
+// 防止重复提交标记
+const hasSubmitted = ref(false)  // 本次练习是否已提交
+
 const score = ref({
   totalScore: 0,
   dimensions: {},
@@ -1856,6 +1886,10 @@ const batchImportMsg = ref('')
 const batchImportSuccess = ref(false)
 const teacherImportMsg = ref('')
 const teacherImportSuccess = ref(false)
+
+// 调班功能
+const adjustingStudentId = ref(null)
+const newClassId = ref('')
 
 // 班级展开状态
 const expandedClassId = ref(null)
@@ -2219,6 +2253,11 @@ async function register() {
   
   if (registerForm.password.length < 6) {
     registerError.value = '密码至少6位'
+    return
+  }
+  
+  if (!registerForm.classId) {
+    registerError.value = '请选择班级'
     return
   }
   
@@ -3322,7 +3361,7 @@ ${chatHistory}
         await supabase.from('practice_records').insert({
           user_id: currentUser.value.id,
           user_name: currentUser.value.name || '未知学生',
-          case_name: generatedCase.value.caseName || '练习记录',
+          case_name: selectedCase.value?.name || generatedCase.value.caseName || '练习记录',
           case_id: selectedCase.value?.id || null,
           score: score.value.totalScore,
           dimensions: normalizedDimensions,
@@ -3335,7 +3374,9 @@ ${chatHistory}
           messages: messages.value,
           created_at: new Date().toISOString()
         })
-        console.log('评分记录已保存，案例ID:', selectedCase.value?.id)
+        // 标记已提交
+  hasSubmitted.value = true
+  console.log('评分记录已保存，案例ID:', selectedCase.value?.id)
         console.log('保存的 strengths:', score.value.strengths)
         console.log('保存的 improvements:', score.value.improvements)
         console.log('保存的 referenceanswer:', score.value.referenceanswer)
@@ -3355,6 +3396,7 @@ function resetPractice() {
   messages.value = []
   generatedCase.value = {}
   score.value = { totalScore: 0, dimensions: {}, feedback: '', strengths: [], weaknesses: [], improvements: [] }
+  hasSubmitted.value = false  // 重置提交状态
 }
 
 // 创建班级
@@ -3430,6 +3472,47 @@ async function deleteClass(classId) {
   } else {
     alert('删除失败：' + error.message)
   }
+}
+
+// 开始调整班级
+function startAdjustClass(studentId, currentClassId) {
+  adjustingStudentId.value = studentId
+  newClassId.value = currentClassId || ''
+}
+
+// 确认调整班级
+async function confirmAdjustClass(studentId) {
+  if (!newClassId.value) {
+    alert('请选择班级')
+    return
+  }
+  
+  const { error } = await supabase
+    .from('users')
+    .update({ class_id: newClassId.value || null })
+    .eq('id', studentId)
+  
+  if (error) {
+    alert('调整班级失败：' + error.message)
+  } else {
+    // 更新本地数据
+    const student = students.value.find(s => s.id === studentId)
+    if (student) {
+      student.class_id = newClassId.value || null
+      student.class_name = classes.value.find(c => c.id === newClassId.value)?.name || ''
+    }
+    // 同时更新 classStudentsMap
+    await loadClassStudents()
+  }
+  
+  adjustingStudentId.value = null
+  newClassId.value = ''
+}
+
+// 取消调整
+function cancelAdjustClass() {
+  adjustingStudentId.value = null
+  newClassId.value = ''
 }
 
 // 删除学生
@@ -4013,7 +4096,8 @@ function getCaseStudents() {
     if (!studentMap[record.user_id]) {
       studentMap[record.user_id] = {
         id: record.user_id,
-        name: record.user_name || '未知',
+        name: record.display_name || record.user_name || record.student_name || '未知学生',
+        class_name: record.student_class || '未知班级',
         records: []
       }
     }
@@ -4026,7 +4110,7 @@ function getCaseStudents() {
   })
 
   const result = Object.values(studentMap)
-  console.log('📊 找到学生数:', result.length, result.map(s => s.name))
+  console.log('📊 找到学生数:', result.length, result.map(s => ({ name: s.name, class: s.class_name })))
   return result
 }
 
@@ -4470,6 +4554,8 @@ async function loadCases() {
 // 加载所有练习记录（老师用）
 async function loadAllRecords() {
   console.log('🔍 开始加载所有练习记录...')
+  
+  // 加载所有练习记录
   const { data, error } = await supabase
     .from('practice_records')
     .select('*, strengths, weaknesses, improvements, referenceanswer, messages')
@@ -4477,18 +4563,52 @@ async function loadAllRecords() {
   
   if (error) {
     console.error('❌ 加载练习记录失败:', error)
-  } else {
-    console.log('✅ 加载练习记录成功，总数:', data?.length || 0)
-    if (data && data.length > 0) {
-      console.log('📋 记录示例:', JSON.stringify({
-        id: data[0].id,
-        user_id: data[0].user_id,
-        user_name: data[0].user_name,
-        case_id: data[0].case_id,
-        case_name: data[0].case_name,
-        score: data[0].score
-      }))
-    }
+    allRecords.value = []
+    return
+  }
+  
+  // 加载所有学生信息用于关联
+  const { data: usersData } = await supabase
+    .from('users')
+    .select('id, name, class_id')
+    .eq('role', 'student')
+  
+  // 加载所有班级信息
+  const { data: classesData } = await supabase
+    .from('classes')
+    .select('id, name')
+  
+  const userMap = {}
+  if (usersData) {
+    usersData.forEach(u => { userMap[u.id] = u })
+  }
+  
+  const classMap = {}
+  if (classesData) {
+    classesData.forEach(c => { classMap[c.id] = c.name })
+  }
+  
+  // 为每条记录补充学生姓名和班级信息
+  if (data) {
+    data.forEach(record => {
+      const user = userMap[record.user_id]
+      record.display_name = user?.name || record.user_name || '未知学生'
+      record.student_class = user?.class_id ? (classMap[user.class_id] || '未知班级') : '未分配'
+      record.student_name = record.display_name  // 兼容用
+    })
+  }
+  
+  console.log('✅ 加载练习记录成功，总数:', data?.length || 0)
+  if (data && data.length > 0) {
+    console.log('📋 记录示例:', JSON.stringify({
+      id: data[0].id,
+      user_id: data[0].user_id,
+      display_name: data[0].display_name,
+      student_class: data[0].student_class,
+      case_id: data[0].case_id,
+      case_name: data[0].case_name,
+      score: data[0].score
+    }))
   }
   
   allRecords.value = data || []
