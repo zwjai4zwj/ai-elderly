@@ -1922,9 +1922,13 @@ const selectedTeacherCase = ref(null) // 教师查看的案例
 
 // 老师负责的班级（支持多个教师管理同一个班级）
 const teacherClasses = computed(() => {
+  console.log('📋 teacherClasses 计算中...')
+  console.log('📋 currentUser.value.id:', currentUser.value.id)
+  console.log('📋 classes.value:', classes.value)
+  
   if (!currentUser.value.id) return []
   // 检查班级的 teacher_ids 数组是否包含当前教师ID
-  return classes.value.filter(c => {
+  const result = classes.value.filter(c => {
     // 兼容旧数据：如果班级有 teacher_ids 字段，检查数组
     if (c.teacher_ids && Array.isArray(c.teacher_ids)) {
       return c.teacher_ids.includes(currentUser.value.id)
@@ -1935,6 +1939,8 @@ const teacherClasses = computed(() => {
     }
     return false
   })
+  console.log('📋 teacherClasses 结果:', result)
+  return result
 })
 
 // 练习历史
@@ -3995,7 +4001,17 @@ function getPublishedClasses(classIds) {
 // 发布案例
 const isPublishing = ref(false)
 async function publishCase() {
-  if (!caseProfile.caseName || !caseProfile.teachingPoints || caseProfile.selectedClasses.length === 0) return
+  console.log('🚀 publishCase 被调用!')
+  console.log('📋 caseProfile.selectedClasses:', caseProfile.selectedClasses)
+  console.log('📋 caseProfile.selectedClasses 长度:', caseProfile.selectedClasses.length)
+  
+  if (!caseProfile.caseName || !caseProfile.teachingPoints || caseProfile.selectedClasses.length === 0) {
+    console.log('⚠️ 发布条件不满足：')
+    console.log('  - caseName:', caseProfile.caseName)
+    console.log('  - teachingPoints:', caseProfile.teachingPoints)
+    console.log('  - selectedClasses:', caseProfile.selectedClasses)
+    return
+  }
   
   console.log('🚀 publishCase 开始发布...')
   console.log('📋 selectedClasses:', caseProfile.selectedClasses, '类型:', typeof caseProfile.selectedClasses[0])
