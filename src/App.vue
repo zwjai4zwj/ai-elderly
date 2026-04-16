@@ -2762,6 +2762,14 @@ async function sendMessage() {
     return
   }
   
+  // 检测是否与案例场景相关
+  const sceneCheck = checkSceneRelevance(userMsg)
+  if (!sceneCheck.relevant) {
+    messages.value.push({ role: 'assistant', content: sceneCheck.warning })
+    userInput.value = ''
+    return
+  }
+  
   messages.value.push({ role: 'user', content: userMsg })
   userInput.value = ''
   isTyping.value = true
@@ -4904,6 +4912,96 @@ function validateUserMessage(msg) {
   }
   
   return { valid: true }
+}
+
+// 检测消息是否与案例场景相关
+function checkSceneRelevance(userMsg) {
+  const caseInfo = generatedCase.value
+  if (!caseInfo || !caseInfo.basicInfo) {
+    return { relevant: true }  // 没有案例信息，不做检测
+  }
+  
+  const userMsgLower = userMsg.toLowerCase()
+  
+  // 提取案例相关关键词
+  const keywords = []
+  
+  // 从老人信息提取关键词
+  if (caseInfo.basicInfo.name) {
+    keywords.push(caseInfo.basicInfo.name.replace(/[^a-zA-Z\u4e00-\u9fa5]/g, ''))
+  }
+  if (caseInfo.medicalHistory) {
+    const history = typeof caseInfo.medicalHistory === 'object' 
+      ? Object.values(caseInfo.medicalHistory).join(' ') 
+      : caseInfo.medicalHistory
+    // 提取疾病关键词
+    const diseaseKeywords = history.match(/[\u4e00-\u9fa5]{2,}/g) || []
+    keywords.push(...diseaseKeywords)
+  }
+  
+  // 从 caseProfile 提取关键词
+  if (caseProfile.value) {
+    if (caseProfile.value.emergency) {
+      keywords.push(caseProfile.value.emergency)
+    }
+    if (caseProfile.value.description) {
+      const descKeywords = caseProfile.value.description.match(/[\u4e00-\u9fa5]{2,}/g) || []
+      keywords.push(...descKeywords)
+    }
+    if (caseProfile.value.teachingPoints) {
+      const points = caseProfile.value.teachingPoints
+      if (Array.isArray(points)) {
+        points.forEach(p => {
+          if (typeof p === 'string') {
+            const ptKeywords = p.match(/[\u4e00-\u9fa5]{2,}/g) || []
+            keywords.push(...ptKeywords)
+          }
+        })
+      }
+    }
+  }
+  
+  // 通用养老场景关键词
+  const sceneKeywords = [
+    // 照护相关
+    '护理', '照护', '照顾', '护理员', '护工', '大夫', '医生', '护士',
+    // 健康相关
+    '身体', '健康', '血压', '血糖', '吃药', '服药', '药', '不舒服', '难受', 
+    '头疼', '头晕', '腿疼', '膝盖', '关节', '睡眠', '休息', '饮食', '吃饭',
+    // 紧急情况
+    '急救', '噎食', '摔', '跌', '卡住', '窒息', '心肺复苏', '海姆立克',
+    // 心理相关
+    '心情', '情绪', '想', '担心', '害怕', '寂寞', '孤独', '聊天', '说话',
+    // 康复相关
+    '康复', '锻炼', '运动', '练习', '活动', '走路', '起床', '按摩',
+    // 日常相关
+    '生活', '起居', '洗澡', '吃饭', '喝水', '上厕所', '大小便',
+    // 设备相关
+    '手环', '床垫', '血压计', '血糖仪', '报警器', '智能',
+    // 家庭相关
+    '家人', '儿女', '孩子', '老伴', '老伴儿', '老伴儿',
+    // 问候相关
+    '您好', '你好', '大爷', '奶奶', '爷爷', '叔叔', '阿姨'
+  ]
+  keywords.push(...sceneKeywords)
+  
+  // 检测是否有任意关键词匹配
+  let hasMatch = false
+  for (const keyword of keywords) {
+    if (keyword.length >= 2 && userMsgLower.includes(keyword.toLowerCase())) {
+      hasMatch = true
+      break
+    }
+  }
+  
+  if (!hasMatch) {
+    return { 
+      relevant: false, 
+      warning: '⚠️ 请根据案例场景交流，否则将收到批评。请结合老人的病情、需求和紧急情况进行有效沟通。' 
+    }
+  }
+  
+  return { relevant: true }
 }
 
 </script>
