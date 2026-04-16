@@ -3937,9 +3937,15 @@ function formatDate(dateStr) {
 // 获取发布的班级名称
 function getPublishedClasses(classIds) {
   if (!classIds || classIds.length === 0) return '未发布'
+  // 确保classes已加载
+  if (!classes.value || classes.value.length === 0) {
+    console.log('⚠️ getPublishedClasses: classes未加载')
+    return '加载中...'
+  }
   const names = classIds.map(id => {
     // 使用宽松比较，避免字符串和数字类型不匹配
     const cls = classes.value.find(c => c.id == id)
+    if (!cls) console.log('⚠️ 未找到班级:', id, '现有班级:', classes.value.map(c => c.id))
     return cls ? cls.name : '未知班级'
   })
   return names.join('、')
