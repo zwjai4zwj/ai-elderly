@@ -3372,7 +3372,7 @@ ${chatHistory}
           kangfu: dimensions['康复训练'] || dimensions.kangfu || 0
         }
         
-        await supabase.from('practice_records').insert({
+        const { error: insertError } = await supabase.from('practice_records').insert({
           user_id: currentUser.value.id,
           user_name: currentUser.value.name || '未知学生',
           case_name: selectedCase.value?.name || generatedCase.value.caseName || '练习记录',
@@ -3388,6 +3388,14 @@ ${chatHistory}
           messages: messages.value,
           created_at: new Date().toISOString()
         })
+        
+        if (insertError) {
+          console.error('保存失败:', insertError)
+          alert('保存失败：' + insertError.message)
+        } else {
+          console.log('✅ 评分记录保存成功')
+        }
+        
         // 标记已提交
   hasSubmitted.value = true
   console.log('评分记录已保存，案例ID:', selectedCase.value?.id)
