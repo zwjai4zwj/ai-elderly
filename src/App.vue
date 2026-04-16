@@ -2062,45 +2062,25 @@ async function loadData() {
       console.log('⚠️ 学生未分配班级，无法加载案例')
     }
   } else if (currentUser.value.role === 'teacher') {
-    // 老师需要加载：学生列表、班级列表、所有练习记录
     console.log('🔄 教师开始加载数据...')
-    console.log('📋 教师信息:', currentUser.value)
+    let classMap = {}
     
-    // 确保班级数据已加载
     if (!classes.value || classes.value.length === 0) {
-      console.log('🔄 加载班级数据...')
-      const { data: classesData } = await supabase
-        .from('classes')
-        .select('*')
-      
-      const classMap = {}
+      const { data: classesData } = await supabase.from('classes').select('*')
       if (classesData) {
         classes.value = classesData
         classesData.forEach(c => { classMap[c.id] = c.name })
-        console.log('✅ 班级数据加载成功:', classesData.length, '个班级')
-        console.log('📋 班级详情:', classesData)
-      } else {
-        console.log('❌ 班级数据加载失败')
       }
     } else {
-      console.log('✅ 班级数据已存在:', classes.value.length, '个班级')
+      classes.value.forEach(c => { classMap[c.id] = c.name })
     }
     
-    console.log('🔄 加载学生数据...')
-    const { data: studentsData } = await supabase
-      .from('users')
-      .select('*')
-      .eq('role', 'student')
-    
-    console.log('📋 学生原始数据:', studentsData)
-    
+    const { data: studentsData } = await supabase.from('users').select('*').eq('role', 'student')
     if (studentsData) {
       students.value = studentsData.map(s => ({
         ...s,
         class_name: classMap[s.class_id] || '未分配'
       }))
-      console.log('✅ 学生数据加载成功:', studentsData.length, '个学生')
-      console.log('📋 students.value:', students.value)
     }
     
     // 加载所有练习记录
