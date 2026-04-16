@@ -3938,7 +3938,8 @@ function formatDate(dateStr) {
 function getPublishedClasses(classIds) {
   if (!classIds || classIds.length === 0) return '未发布'
   const names = classIds.map(id => {
-    const cls = classes.value.find(c => c.id === id)
+    // 使用宽松比较，避免字符串和数字类型不匹配
+    const cls = classes.value.find(c => c.id == id)
     return cls ? cls.name : '未知班级'
   })
   return names.join('、')
