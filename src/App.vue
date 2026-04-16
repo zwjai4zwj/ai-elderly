@@ -3997,9 +3997,13 @@ const isPublishing = ref(false)
 async function publishCase() {
   if (!caseProfile.caseName || !caseProfile.teachingPoints || caseProfile.selectedClasses.length === 0) return
   
+  console.log('🚀 publishCase 开始发布...')
+  console.log('📋 selectedClasses:', caseProfile.selectedClasses, '类型:', typeof caseProfile.selectedClasses[0])
+  
   isPublishing.value = true
   
   try {
+    console.log('📋 插入数据库的 class_ids:', caseProfile.selectedClasses)
     const { error } = await supabase.from('cases').insert({
       name: caseProfile.caseName,
       description: caseProfile.teachingPoints, // 使用教学要点
