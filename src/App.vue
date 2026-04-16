@@ -2301,6 +2301,20 @@ async function register() {
       accountName = `${accountName}${suffix}`
     }
     
+    // 检查姓名是否已存在（同名学生不能重复注册）
+    const { data: sameName } = await supabase
+      .from('users')
+      .select('id, name')
+      .eq('name', registerForm.name)
+      .eq('role', 'student')
+      .limit(1)
+    
+    if (sameName && sameName.length > 0) {
+      isRegistering.value = false
+      registerError.value = '该姓名已存在，请与管理员联系'
+      return
+    }
+    
     // 直接创建用户记录（简化注册，不走 Supabase Auth）
     const userId = 'student_' + Date.now()
     const { data, error } = await supabase
