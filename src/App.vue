@@ -711,10 +711,10 @@
               </div>
               <button 
                 @click="endChat" 
-                :disabled="messages.filter(m => m.role === 'user').length < 5"
+                :disabled="messages.filter(m => m.role === 'user').length < 5 || isScoring"
                 class="w-full mt-3 py-2 text-white rounded-lg text-sm transition-colors"
-                :class="messages.filter(m => m.role === 'user').length >= 5 ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-400 cursor-not-allowed'">
-                结束对话并评分 {{ messages.filter(m => m.role === 'user').length < 5 ? `（还需${5 - messages.filter(m => m.role === 'user').length}轮）` : '' }}
+                :class="messages.filter(m => m.role === 'user').length >= 5 && !isScoring ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-400 cursor-not-allowed'">
+                {{ isScoring ? '正在评分，请稍等...' : '结束对话并评分' }} {{ messages.filter(m => m.role === 'user').length < 5 ? `（还需${5 - messages.filter(m => m.role === 'user').length}轮）` : '' }}
               </button>
             </div>
             </div><!-- 关闭聊天区域div -->
@@ -1862,6 +1862,7 @@ const isTyping = ref(false)
 
 // 防止重复提交标记
 const hasSubmitted = ref(false)  // 本次练习是否已提交
+const isScoring = ref(false)  // 正在评分中
 
 const score = ref({
   totalScore: 0,
@@ -3276,6 +3277,8 @@ function speakWithBrowser(text, gender) {
 
 // 结束对话
 async function endChat() {
+  if (isScoring.value) return  // 防止重复点击
+  isScoring.value = true
   isTyping.value = true
   
   // 添加评分加载提示
@@ -3373,6 +3376,7 @@ ${chatHistory}
     }
   } finally {
     isTyping.value = false
+    isScoring.value = false
     
     // 移除评分加载提示
     messages.value = messages.value.filter(m => m.content !== '⏳ 正在评分，请稍等...')
@@ -3438,6 +3442,7 @@ function resetPractice() {
   generatedCase.value = {}
   score.value = { totalScore: 0, dimensions: {}, feedback: '', strengths: [], weaknesses: [], improvements: [] }
   hasSubmitted.value = false  // 重置提交状态
+  isScoring.value = false  // 重置评分状态
 }
 
 // 创建班级
