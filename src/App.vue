@@ -965,7 +965,7 @@
                 </div>
                 <div class="mt-2 text-sm">
                   <span class="text-gray-500">发布班级：</span>
-                  <span>{{ getPublishedClasses(c.class_ids) }}</span>
+                  <span>{{ c.classNames || '加载中...' }}</span>
                 </div>
               </div>
             </div>
@@ -995,7 +995,7 @@
               <!-- 发布信息 -->
               <div class="p-4 bg-gray-50 rounded-lg">
                 <p class="text-gray-500">发布班级</p>
-                <p class="font-medium">{{ getPublishedClasses(selectedTeacherCase.class_ids) }}</p>
+                <p class="font-medium">{{ selectedTeacherCase.classNames || getPublishedClasses(selectedTeacherCase.class_ids) }}</p>
               </div>
               
               <div class="flex gap-2 mt-6">
@@ -1027,7 +1027,7 @@
               <div class="p-4 bg-blue-50 rounded-lg">
                 <h3 class="font-bold text-blue-800">{{ selectedTeacherCase.name }}</h3>
                 <p class="text-sm text-gray-600 mt-1">发布时间：{{ formatDate(selectedTeacherCase.created_at) }}</p>
-                <p class="text-sm text-gray-600">发布班级：{{ getPublishedClasses(selectedTeacherCase.class_ids) }}</p>
+                <p class="text-sm text-gray-600">发布班级：{{ selectedTeacherCase.classNames || '加载中...' }}</p>
               </div>
 
               <!-- 案例统计概览 -->
@@ -3945,17 +3945,28 @@ function formatDate(dateStr) {
   })
 }
 
-// 获取发布的班级名称
-function getPublishedClasses(classIds) {
+// 获取发布的班级名称（异步版本，确保班级数据已加载）
+async function getPublishedClassesAsync(classIds) {
   if (!classIds || classIds.length === 0) return '未发布'
   
-  console.log('📋 getPublishedClasses 被调用')
+  console.log('📋 getPublishedClassesAsync 被调用')
   console.log('  - classIds:', classIds, '类型:', typeof classIds[0])
+  
+  // 如果班级数据未加载，主动加载
+  if (!classes.value || classes.value.length === 0) {
+    console.log('📋 班级数据未加载，主动加载...')
+    const { data: classesData } = await supabase.from('classes').select('*')
+    if (classesData) {
+      classes.value = classesData
+      console.log('✅ 班级数据加载成功:', classesData.length, '个')
+    }
+  }
+  
   console.log('  - classes.value:', classes.value)
   
   if (!classes.value || classes.value.length === 0) {
-    console.log('⚠️ classes.value 为空或未加载')
-    return '班级加载中...'
+    console.log('⚠️ 班级数据加载失败')
+    return '加载失败'
   }
   
   console.log('  - 班级ID类型:', classes.value[0].id, '类型:', typeof classes.value[0].id)
@@ -3964,6 +3975,18 @@ function getPublishedClasses(classIds) {
     // 使用宽松比较
     const cls = classes.value.find(c => c.id == id)
     console.log('  - 查找 id:', id, '(类型:', typeof id, ')', '结果:', cls ? cls.name : '未找到')
+    return cls ? cls.name : '未知班级'
+  })
+  return names.join('、')
+}
+
+// 同步版本（用于模板，已废弃，改用异步版本）
+function getPublishedClasses(classIds) {
+  if (!classIds || classIds.length === 0) return '未发布'
+  if (!classes.value || classes.value.length === 0) return '加载中...'
+  
+  const names = classIds.map(id => {
+    const cls = classes.value.find(c => c.id == id)
     return cls ? cls.name : '未知班级'
   })
   return names.join('、')
@@ -4323,7 +4346,7 @@ async function generateCaseReport() {
   <h1>${selectedTeacherCase.value.name}</h1>
   <div class="header">
     <p>发布时间：${formatDate(selectedTeacherCase.value.created_at)}</p>
-    <p>发布班级：${getPublishedClasses(selectedTeacherCase.value.class_ids)}</p>
+    <p>发布班级：${selectedTeacherCase.value.classNames || '未知'}</p>
     <p>生成时间：${new Date().toLocaleString()}</p>
   </div>
 
@@ -4596,6 +4619,32 @@ async function loadCases() {
     .order('created_at', { ascending: false })
   cases.value = data || []
   console.log('✅ 加载案例数量:', cases.value?.length || 0)
+  
+  // 加载班级数据用于显示班级名称
+  if (!classes.value || classes.value.length === 0) {
+    console.log('📋 加载班级数据...')
+    const { data: classesData } = await supabase.from('classes').select('*')
+    if (classesData) {
+      classes.value = classesData
+      console.log('✅ 班级数据加载成功:', classesData.length, '个')
+    }
+  }
+  
+  // 为每个案例设置班级名称
+  if (cases.value.length > 0) {
+    cases.value.forEach(c => {
+      if (c.class_ids && c.class_ids.length > 0) {
+        const names = c.class_ids.map(id => {
+          const cls = classes.value.find(cls => cls.id == id)
+          return cls ? cls.name : '未知班级'
+        })
+        c.classNames = names.join('、')
+        console.log('📋 案例班级名称:', c.name, '->', c.classNames)
+      } else {
+        c.classNames = '未发布'
+      }
+    })
+  }
 }
 
 // 加载所有练习记录（老师用）
