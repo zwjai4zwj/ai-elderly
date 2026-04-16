@@ -873,7 +873,7 @@
               <button @click="teacherStep = 'create_case'" class="w-full py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700">
                 + 发布新案例
               </button>
-              <button @click="teacherStep = 'case_list'" class="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
+              <button @click="teacherStep = 'case_list'; loadCases()" class="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
                 📋 查看案例列表
               </button>
             </div>
