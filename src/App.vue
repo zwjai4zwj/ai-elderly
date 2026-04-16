@@ -4632,10 +4632,17 @@ async function loadCases() {
   
   // 为每个案例设置班级名称
   if (cases.value.length > 0) {
+    console.log('📋 开始设置案例班级名称，班级数据:', classes.value)
     cases.value.forEach(c => {
       if (c.class_ids && c.class_ids.length > 0) {
+        console.log('📋 案例:', c.name, 'class_ids:', c.class_ids, '类型:', typeof c.class_ids[0])
+        console.log('📋 班级数据示例:', classes.value[0])
         const names = c.class_ids.map(id => {
-          const cls = classes.value.find(cls => cls.id == id)
+          // 转换为数字进行比较
+          const numId = Number(id)
+          console.log('📋 查找班级ID:', id, '->', numId)
+          const cls = classes.value.find(cls => cls.id === numId || cls.id == numId)
+          console.log('📋 查找结果:', cls ? cls.name : '未找到')
           return cls ? cls.name : '未知班级'
         })
         c.classNames = names.join('、')
