@@ -3948,18 +3948,22 @@ function formatDate(dateStr) {
 // 获取发布的班级名称
 function getPublishedClasses(classIds) {
   if (!classIds || classIds.length === 0) return '未发布'
-  // 如果classes未加载，先加载
+  
+  console.log('📋 getPublishedClasses 被调用')
+  console.log('  - classIds:', classIds, '类型:', typeof classIds[0])
+  console.log('  - classes.value:', classes.value)
+  
   if (!classes.value || classes.value.length === 0) {
-    console.log('⚠️ getPublishedClasses: classes未加载，正在加载...')
-    // 同步加载（假设数据已缓存）
-    if (classes.value && classes.value.length > 0) {
-      // 已有数据
-    }
+    console.log('⚠️ classes.value 为空或未加载')
+    return '班级加载中...'
   }
+  
+  console.log('  - 班级ID类型:', classes.value[0].id, '类型:', typeof classes.value[0].id)
+  
   const names = classIds.map(id => {
-    // 使用宽松比较，避免字符串和数字类型不匹配
+    // 使用宽松比较
     const cls = classes.value.find(c => c.id == id)
-    if (!cls) console.log('⚠️ 未找到班级:', id, '现有班级:', classes.value.map(c => c.id))
+    console.log('  - 查找 id:', id, '(类型:', typeof id, ')', '结果:', cls ? cls.name : '未找到')
     return cls ? cls.name : '未知班级'
   })
   return names.join('、')
