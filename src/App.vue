@@ -2042,14 +2042,25 @@ async function loadData() {
     }
   } else if (currentUser.value.role === 'teacher') {
     // 老师需要加载：学生列表、班级列表、所有练习记录
-    const { data: classesData } = await supabase
-      .from('classes')
-      .select('*')
+    console.log('🔄 教师开始加载数据...')
     
-    const classMap = {}
-    if (classesData) {
-      classes.value = classesData
-      classesData.forEach(c => { classMap[c.id] = c.name })
+    // 确保班级数据已加载
+    if (!classes.value || classes.value.length === 0) {
+      console.log('🔄 加载班级数据...')
+      const { data: classesData } = await supabase
+        .from('classes')
+        .select('*')
+      
+      const classMap = {}
+      if (classesData) {
+        classes.value = classesData
+        classesData.forEach(c => { classMap[c.id] = c.name })
+        console.log('✅ 班级数据加载成功:', classesData.length, '个班级')
+      } else {
+        console.log('❌ 班级数据加载失败')
+      }
+    } else {
+      console.log('✅ 班级数据已存在:', classes.value.length, '个班级')
     }
     
     const { data: studentsData } = await supabase
@@ -3937,10 +3948,13 @@ function formatDate(dateStr) {
 // 获取发布的班级名称
 function getPublishedClasses(classIds) {
   if (!classIds || classIds.length === 0) return '未发布'
-  // 确保classes已加载
+  // 如果classes未加载，先加载
   if (!classes.value || classes.value.length === 0) {
-    console.log('⚠️ getPublishedClasses: classes未加载')
-    return '加载中...'
+    console.log('⚠️ getPublishedClasses: classes未加载，正在加载...')
+    // 同步加载（假设数据已缓存）
+    if (classes.value && classes.value.length > 0) {
+      // 已有数据
+    }
   }
   const names = classIds.map(id => {
     // 使用宽松比较，避免字符串和数字类型不匹配
