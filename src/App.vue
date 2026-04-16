@@ -714,7 +714,7 @@
                 :disabled="messages.filter(m => m.role === 'user').length < 5 || isScoring"
                 class="w-full mt-3 py-2 text-white rounded-lg text-sm transition-colors"
                 :class="messages.filter(m => m.role === 'user').length >= 5 && !isScoring ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-400 cursor-not-allowed'">
-                {{ isScoring ? '正在评分，请稍等...' : '结束对话并评分' }} {{ messages.filter(m => m.role === 'user').length < 5 ? `（还需${5 - messages.filter(m => m.role === 'user').length}轮）` : '' }}
+                {{ isScoring ? '正在评分，请稍等...' : (hasSubmitted ? '本次训练已结束' : '结束对话并评分') }} {{ !hasSubmitted && messages.filter(m => m.role === 'user').length < 5 ? `（还需${5 - messages.filter(m => m.role === 'user').length}轮）` : '' }}
               </button>
             </div>
             </div><!-- 关闭聊天区域div -->
@@ -3376,7 +3376,7 @@ ${chatHistory}
     }
   } finally {
     isTyping.value = false
-    isScoring.value = false
+    // 评分完成后不立即重置 isScoring，保持按钮禁用状态，直到开始新训练
     
     // 移除评分加载提示
     messages.value = messages.value.filter(m => m.content !== '⏳ 正在评分，请稍等...')
