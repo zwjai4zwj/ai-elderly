@@ -3278,6 +3278,7 @@ function speakWithBrowser(text, gender) {
 // 结束对话
 async function endChat() {
   if (isScoring.value) return  // 防止重复点击
+  console.log('🔴 开始评分，isScoring 设为 true')
   isScoring.value = true
   isTyping.value = true
   
@@ -3377,6 +3378,7 @@ ${chatHistory}
   } finally {
     isTyping.value = false
     // 评分完成后不立即重置 isScoring，保持按钮禁用状态，直到开始新训练
+    console.log('🟢 评分完成，isScoring 保持 true，hasSubmitted 将设为 true')
     
     // 移除评分加载提示
     messages.value = messages.value.filter(m => m.content !== '⏳ 正在评分，请稍等...')
