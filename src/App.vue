@@ -653,10 +653,11 @@
                 <p class="text-sm text-yellow-700 font-bold mb-1">💡 实训要求：</p>
                 <p class="text-xs text-yellow-700">请从以下四个维度与老人进行沟通：</p>
                 <ul class="text-xs text-yellow-700 mt-1 ml-4 list-disc">
-                  <li><span class="font-bold">思政维度：</span>关爱老人、尊重价值观、职业道德、人文关怀</li>
-                  <li><span class="font-bold">心理慰藉：</span>情感支持、缓解焦虑、耐心倾听、心理疏导</li>
-                  <li><span class="font-bold">健康宣教：</span>用药提醒、饮食指导、生活习惯、安全防护</li>
-                  <li><span class="font-bold">康复训练：</span>功能锻炼、日常活动指导、安全事项</li>
+                  <li><span class="font-bold">伦理操守：</span>尊重老人、关爱老人、职业道德、操作规范、守时守信、保护隐私</li>
+                  <li><span class="font-bold">心理慰藉：</span>耐心倾听、情感支持、缓解焦虑、心理疏导</li>
+                  <li><span class="font-bold">健康宣教：</span>用药指导、饮食建议、生活习惯、安全防护、观察能力</li>
+                  <li><span class="font-bold">康复训练：</span>功能锻炼、日常活动、安全事项、预防并发症</li>
+                  <li><span class="font-bold">智慧赋能：</span>智能手环、智能床垫、跌倒报警器、远程监测</li>
                 </ul>
                 <p class="text-xs text-orange-600 mt-2">⚠️ 简单称呼（如"你好"、"拜拜"）只能出现一次，请深入沟通！</p>
               </div>
@@ -757,42 +758,52 @@
             <div class="space-y-4">
               <div>
                 <div class="flex justify-between mb-1">
-                  <span>思政维度</span>
-                  <span class="font-medium">{{ score.dimensions?.思政维度 || score.dimensions?.sizheng || 0 }}/25</span>
+                  <span>伦理操守</span>
+                  <span class="font-medium">{{ score.dimensions?.伦理操守 || score.dimensions?.lunli || 0 }}/20</span>
                 </div>
                 <div class="bg-gray-200 rounded-full h-3">
                   <div class="bg-blue-600 h-3 rounded-full transition-all duration-500" 
-                       :style="{ width: ((score.dimensions?.思政维度 || score.dimensions?.sizheng || 0) / 25 * 100) + '%' }"></div>
+                       :style="{ width: ((score.dimensions?.伦理操守 || score.dimensions?.lunli || 0) / 20 * 100) + '%' }"></div>
                 </div>
               </div>
               <div>
                 <div class="flex justify-between mb-1">
                   <span>心理慰藉</span>
-                  <span class="font-medium">{{ score.dimensions?.心理慰藉 || score.dimensions?.xinli || 0 }}/25</span>
+                  <span class="font-medium">{{ score.dimensions?.心理慰藉 || score.dimensions?.xinli || 0 }}/20</span>
                 </div>
                 <div class="bg-gray-200 rounded-full h-3">
                   <div class="bg-green-600 h-3 rounded-full transition-all duration-500" 
-                       :style="{ width: ((score.dimensions?.心理慰藉 || score.dimensions?.xinli || 0) / 25 * 100) + '%' }"></div>
+                       :style="{ width: ((score.dimensions?.心理慰藉 || score.dimensions?.xinli || 0) / 20 * 100) + '%' }"></div>
                 </div>
               </div>
               <div>
                 <div class="flex justify-between mb-1">
                   <span>健康宣教</span>
-                  <span class="font-medium">{{ score.dimensions?.健康宣教 || score.dimensions?.jiankang || 0 }}/25</span>
+                  <span class="font-medium">{{ score.dimensions?.健康宣教 || score.dimensions?.jiankang || 0 }}/20</span>
                 </div>
                 <div class="bg-gray-200 rounded-full h-3">
                   <div class="bg-orange-600 h-3 rounded-full transition-all duration-500" 
-                       :style="{ width: ((score.dimensions?.健康宣教 || score.dimensions?.jiankang || 0) / 25 * 100) + '%' }"></div>
+                       :style="{ width: ((score.dimensions?.健康宣教 || score.dimensions?.jiankang || 0) / 20 * 100) + '%' }"></div>
                 </div>
               </div>
               <div>
                 <div class="flex justify-between mb-1">
                   <span>康复训练</span>
-                  <span class="font-medium">{{ score.dimensions?.康复训练 || score.dimensions?.kangfu || 0 }}/25</span>
+                  <span class="font-medium">{{ score.dimensions?.康复训练 || score.dimensions?.kangfu || 0 }}/20</span>
                 </div>
                 <div class="bg-gray-200 rounded-full h-3">
                   <div class="bg-purple-600 h-3 rounded-full transition-all duration-500" 
-                       :style="{ width: ((score.dimensions?.康复训练 || score.dimensions?.kangfu || 0) / 25 * 100) + '%' }"></div>
+                       :style="{ width: ((score.dimensions?.康复训练 || score.dimensions?.kangfu || 0) / 20 * 100) + '%' }"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span>智慧赋能</span>
+                  <span class="font-medium">{{ score.dimensions?.智慧赋能 || score.dimensions?.zhihui || 0 }}/20</span>
+                </div>
+                <div class="bg-gray-200 rounded-full h-3">
+                  <div class="bg-pink-600 h-3 rounded-full transition-all duration-500" 
+                       :style="{ width: ((score.dimensions?.智慧赋能 || score.dimensions?.zhihui || 0) / 20 * 100) + '%' }"></div>
                 </div>
               </div>
             </div>
@@ -1132,17 +1143,18 @@
                           </span>
                         </div>
                         <span class="text-xs text-gray-400">
-                          思政:{{ getDimensionScore(record.dimensions, 'sizheng') }} 
+                          伦理:{{ getDimensionScore(record.dimensions, 'lunli') }} 
                           心理:{{ getDimensionScore(record.dimensions, 'xinli') }} 
                           健康:{{ getDimensionScore(record.dimensions, 'jiankang') }} 
                           康复:{{ getDimensionScore(record.dimensions, 'kangfu') }}
+                          智慧:{{ getDimensionScore(record.dimensions, 'zhihui') }}
                         </span>
                       </div>
                     </div>
                     <!-- 最近两次对比 -->
                     <div v-if="student.records.length >= 2" class="mt-3 p-3 bg-blue-50 rounded text-sm">
                       <p class="font-medium text-blue-800">📊 最近两次对比：</p>
-                      <div class="grid grid-cols-2 gap-2 mt-2">
+                      <div class="grid grid-cols-3 gap-2 mt-2">
                         <div>
                           <span class="text-gray-500">总分变化：</span>
                           <span class="font-bold" :class="getTrendClass(student.records[0].score - student.records[1].score)">
@@ -1150,21 +1162,33 @@
                           </span>
                         </div>
                         <div>
-                          <span class="text-gray-500">思政维度：</span>
-                          <span class="font-bold" :class="getTrendClass(getDimensionScore(student.records[0].dimensions, 'sizheng') - getDimensionScore(student.records[1].dimensions, 'sizheng'))">
-                            {{ getDimensionScore(student.records[0].dimensions, 'sizheng') > getDimensionScore(student.records[1].dimensions, 'sizheng') ? '+' : '' }}{{ getDimensionScore(student.records[0].dimensions, 'sizheng') - getDimensionScore(student.records[1].dimensions, 'sizheng') }}
+                          <span class="text-gray-500">伦理操守：</span>
+                          <span class="font-bold" :class="getTrendClass(getDimensionScore(student.records[0].dimensions, 'lunli') - getDimensionScore(student.records[1].dimensions, 'lunli'))">
+                            {{ getDimensionScore(student.records[0].dimensions, 'lunli') > getDimensionScore(student.records[1].dimensions, 'lunli') ? '+' : '' }}{{ getDimensionScore(student.records[0].dimensions, 'lunli') - getDimensionScore(student.records[1].dimensions, 'lunli') }}
                           </span>
                         </div>
                         <div>
-                          <span class="text-gray-500">心理维度：</span>
+                          <span class="text-gray-500">心理慰藉：</span>
                           <span class="font-bold" :class="getTrendClass(getDimensionScore(student.records[0].dimensions, 'xinli') - getDimensionScore(student.records[1].dimensions, 'xinli'))">
                             {{ getDimensionScore(student.records[0].dimensions, 'xinli') > getDimensionScore(student.records[1].dimensions, 'xinli') ? '+' : '' }}{{ getDimensionScore(student.records[0].dimensions, 'xinli') - getDimensionScore(student.records[1].dimensions, 'xinli') }}
                           </span>
                         </div>
                         <div>
-                          <span class="text-gray-500">健康维度：</span>
+                          <span class="text-gray-500">健康宣教：</span>
                           <span class="font-bold" :class="getTrendClass(getDimensionScore(student.records[0].dimensions, 'jiankang') - getDimensionScore(student.records[1].dimensions, 'jiankang'))">
                             {{ getDimensionScore(student.records[0].dimensions, 'jiankang') > getDimensionScore(student.records[1].dimensions, 'jiankang') ? '+' : '' }}{{ getDimensionScore(student.records[0].dimensions, 'jiankang') - getDimensionScore(student.records[1].dimensions, 'jiankang') }}
+                          </span>
+                        </div>
+                        <div>
+                          <span class="text-gray-500">康复训练：</span>
+                          <span class="font-bold" :class="getTrendClass(getDimensionScore(student.records[0].dimensions, 'kangfu') - getDimensionScore(student.records[1].dimensions, 'kangfu'))">
+                            {{ getDimensionScore(student.records[0].dimensions, 'kangfu') > getDimensionScore(student.records[1].dimensions, 'kangfu') ? '+' : '' }}{{ getDimensionScore(student.records[0].dimensions, 'kangfu') - getDimensionScore(student.records[1].dimensions, 'kangfu') }}
+                          </span>
+                        </div>
+                        <div>
+                          <span class="text-gray-500">智慧赋能：</span>
+                          <span class="font-bold" :class="getTrendClass(getDimensionScore(student.records[0].dimensions, 'zhihui') - getDimensionScore(student.records[1].dimensions, 'zhihui'))">
+                            {{ getDimensionScore(student.records[0].dimensions, 'zhihui') > getDimensionScore(student.records[1].dimensions, 'zhihui') ? '+' : '' }}{{ getDimensionScore(student.records[0].dimensions, 'zhihui') - getDimensionScore(student.records[1].dimensions, 'zhihui') }}
                           </span>
                         </div>
                       </div>
@@ -1173,49 +1197,59 @@
                 </div>
               </div>
 
-              <!-- 四维度班级平均对比 -->
+              <!-- 五维度班级平均对比 -->
               <div class="mt-6">
-                <h3 class="font-bold mb-3">🎯 四维度班级平均对比</h3>
-                <div class="grid grid-cols-2 gap-4">
-                  <div class="border rounded-lg p-4">
-                    <h4 class="font-medium text-gray-700 mb-2">思政维度</h4>
+                <h3 class="font-bold mb-3">🎯 五维度班级平均对比</h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                  <div class="border rounded-lg p-3">
+                    <h4 class="font-medium text-gray-700 mb-2 text-sm">伦理操守</h4>
                     <div class="flex items-center gap-2">
-                      <div class="flex-1 h-4 bg-gray-100 rounded-full">
-                        <div class="h-4 rounded-full bg-red-500" :style="{width: getCaseStats().dimensionStats.sizheng.avg + '%'}"></div>
+                      <div class="flex-1 h-3 bg-gray-100 rounded-full">
+                        <div class="h-3 rounded-full bg-blue-500" :style="{width: (getCaseStats().dimensionStats.lunli?.avg || 0) + '%'}"></div>
                       </div>
-                      <span class="font-bold w-12 text-right">{{ getCaseStats().dimensionStats.sizheng.avg }}</span>
+                      <span class="font-bold text-sm">{{ getCaseStats().dimensionStats.lunli?.avg || 0 }}</span>
                     </div>
-                    <p class="text-xs text-gray-500 mt-1">最高：{{ getCaseStats().dimensionStats.sizheng.max }} / 最低：{{ getCaseStats().dimensionStats.sizheng.min }}</p>
+                    <p class="text-xs text-gray-500 mt-1">最高：{{ getCaseStats().dimensionStats.lunli?.max || 0 }} / 最低：{{ getCaseStats().dimensionStats.lunli?.min || 0 }}</p>
                   </div>
-                  <div class="border rounded-lg p-4">
-                    <h4 class="font-medium text-gray-700 mb-2">心理慰藉</h4>
+                  <div class="border rounded-lg p-3">
+                    <h4 class="font-medium text-gray-700 mb-2 text-sm">心理慰藉</h4>
                     <div class="flex items-center gap-2">
-                      <div class="flex-1 h-4 bg-gray-100 rounded-full">
-                        <div class="h-4 rounded-full bg-orange-500" :style="{width: getCaseStats().dimensionStats.xinli.avg + '%'}"></div>
+                      <div class="flex-1 h-3 bg-gray-100 rounded-full">
+                        <div class="h-3 rounded-full bg-green-500" :style="{width: getCaseStats().dimensionStats.xinli?.avg + '%'}"></div>
                       </div>
-                      <span class="font-bold w-12 text-right">{{ getCaseStats().dimensionStats.xinli.avg }}</span>
+                      <span class="font-bold text-sm">{{ getCaseStats().dimensionStats.xinli?.avg || 0 }}</span>
                     </div>
-                    <p class="text-xs text-gray-500 mt-1">最高：{{ getCaseStats().dimensionStats.xinli.max }} / 最低：{{ getCaseStats().dimensionStats.xinli.min }}</p>
+                    <p class="text-xs text-gray-500 mt-1">最高：{{ getCaseStats().dimensionStats.xinli?.max || 0 }} / 最低：{{ getCaseStats().dimensionStats.xinli?.min || 0 }}</p>
                   </div>
-                  <div class="border rounded-lg p-4">
-                    <h4 class="font-medium text-gray-700 mb-2">健康宣教</h4>
+                  <div class="border rounded-lg p-3">
+                    <h4 class="font-medium text-gray-700 mb-2 text-sm">健康宣教</h4>
                     <div class="flex items-center gap-2">
-                      <div class="flex-1 h-4 bg-gray-100 rounded-full">
-                        <div class="h-4 rounded-full bg-green-500" :style="{width: getCaseStats().dimensionStats.jiankang.avg + '%'}"></div>
+                      <div class="flex-1 h-3 bg-gray-100 rounded-full">
+                        <div class="h-3 rounded-full bg-orange-500" :style="{width: getCaseStats().dimensionStats.jiankang?.avg + '%'}"></div>
                       </div>
-                      <span class="font-bold w-12 text-right">{{ getCaseStats().dimensionStats.jiankang.avg }}</span>
+                      <span class="font-bold text-sm">{{ getCaseStats().dimensionStats.jiankang?.avg || 0 }}</span>
                     </div>
-                    <p class="text-xs text-gray-500 mt-1">最高：{{ getCaseStats().dimensionStats.jiankang.max }} / 最低：{{ getCaseStats().dimensionStats.jiankang.min }}</p>
+                    <p class="text-xs text-gray-500 mt-1">最高：{{ getCaseStats().dimensionStats.jiankang?.max || 0 }} / 最低：{{ getCaseStats().dimensionStats.jiankang?.min || 0 }}</p>
                   </div>
-                  <div class="border rounded-lg p-4">
-                    <h4 class="font-medium text-gray-700 mb-2">康复训练</h4>
+                  <div class="border rounded-lg p-3">
+                    <h4 class="font-medium text-gray-700 mb-2 text-sm">康复训练</h4>
                     <div class="flex items-center gap-2">
-                      <div class="flex-1 h-4 bg-gray-100 rounded-full">
-                        <div class="h-4 rounded-full bg-blue-500" :style="{width: getCaseStats().dimensionStats.kangfu.avg + '%'}"></div>
+                      <div class="flex-1 h-3 bg-gray-100 rounded-full">
+                        <div class="h-3 rounded-full bg-purple-500" :style="{width: getCaseStats().dimensionStats.kangfu?.avg + '%'}"></div>
                       </div>
-                      <span class="font-bold w-12 text-right">{{ getCaseStats().dimensionStats.kangfu.avg }}</span>
+                      <span class="font-bold text-sm">{{ getCaseStats().dimensionStats.kangfu?.avg || 0 }}</span>
                     </div>
-                    <p class="text-xs text-gray-500 mt-1">最高：{{ getCaseStats().dimensionStats.kangfu.max }} / 最低：{{ getCaseStats().dimensionStats.kangfu.min }}</p>
+                    <p class="text-xs text-gray-500 mt-1">最高：{{ getCaseStats().dimensionStats.kangfu?.max || 0 }} / 最低：{{ getCaseStats().dimensionStats.kangfu?.min || 0 }}</p>
+                  </div>
+                  <div class="border rounded-lg p-3">
+                    <h4 class="font-medium text-gray-700 mb-2 text-sm">智慧赋能</h4>
+                    <div class="flex items-center gap-2">
+                      <div class="flex-1 h-3 bg-gray-100 rounded-full">
+                        <div class="h-3 rounded-full bg-pink-500" :style="{width: (getCaseStats().dimensionStats.zhihui?.avg || 0) + '%'}"></div>
+                      </div>
+                      <span class="font-bold text-sm">{{ getCaseStats().dimensionStats.zhihui?.avg || 0 }}</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">最高：{{ getCaseStats().dimensionStats.zhihui?.max || 0 }} / 最低：{{ getCaseStats().dimensionStats.zhihui?.min || 0 }}</p>
                   </div>
                 </div>
               </div>
@@ -3316,11 +3350,12 @@ async function endChat() {
 对话记录：
 ${chatHistory}
 
-评分维度（每项满分25分）：
-1. 思政维度：是否体现关爱老人、尊重老人价值观，是否具备护理员职业道德和人文关怀精神
-2. 心理慰藉：是否给予情感支持、缓解焦虑，是否耐心倾听、理解老人情绪、提供心理疏导
-3. 健康宣教：日常照护知识是否准确易懂，包括用药提醒、饮食指导、生活习惯建议、安全防护意识
-4. 康复训练：是否掌握康复训练方法，能否指导老人进行日常活动、功能锻炼，注意安全事项
+评分维度（每项满分20分，共100分）：
+1. 伦理操守：是否尊重老人、关爱老人、遵守职业道德和操作规范、仪表端正、态度亲和、守时守信、保护隐私
+2. 心理慰藉：是否耐心倾听、理解老人情绪、给予情感支持、缓解焦虑、提供心理疏导
+3. 健康宣教：日常照护知识是否准确（用药指导、饮食建议、生活习惯、安全防护）、是否善于观察老人面色和行为变化
+4. 康复训练：是否指导老人进行安全的功能锻炼、日常活动、预防并发症、注意安全事项
+5. 智慧赋能：是否能结合智能设备（智能手环、智能床垫、跌倒报警器、远程监测等）进行健康管理
 
 评分要求：
 - 严格根据对话内容评分，不要随意给高分
@@ -3333,16 +3368,17 @@ ${chatHistory}
 {
   "totalScore": 总分(0-100),
   "dimensions": {
-    "思政维度": 分数(0-25),
-    "心理慰藉": 分数(0-25),
-    "健康宣教": 分数(0-25),
-    "康复训练": 分数(0-25)
+    "伦理操守": 分数(0-20),
+    "心理慰藉": 分数(0-20),
+    "健康宣教": 分数(0-20),
+    "康复训练": 分数(0-20),
+    "智慧赋能": 分数(0-20)
   },
   "feedback": "整体评价（50字以内）",
   "strengths": ["具体优点1", "具体优点2"],
   "weaknesses": ["具体不足1", "具体不足2"],
-  "improvements": ["具体建议1", "具体建议2", "建议了解并使用智能手环、智能床垫等智慧化设备监测老人状态"],
-  "referenceanswer": "针对该老人情况的理想沟通参考答案，包含四个维度的合理化建议、智慧化设备（如智能手环、智能床垫、跌倒报警器等）的使用建议，以及预约下次照护时间（如：'明天下午我再来看您'、'后天上午我来进行康复指导'），350字以内"
+  "improvements": ["具体建议1", "具体建议2"],
+  "referenceanswer": "针对该老人情况的理想沟通参考答案，包含五个维度的合理化建议、智慧化设备（如智能手环、智能床垫、跌倒报警器等）的使用建议，以及预约下次照护时间（如：'明天下午我再来看您'、'后天上午我来进行康复指导'），350字以内"
 }`
 
     const response = await fetch(EDGE_FUNCTION_URL, {
@@ -3374,10 +3410,11 @@ ${chatHistory}
     score.value = {
       totalScore: Math.min(60 + studentMsgs.length * 2, 85),
       dimensions: {
-        '思政维度': 15 + Math.floor(Math.random() * 5),
+        '伦理操守': 15 + Math.floor(Math.random() * 5),
         '心理慰藉': 14 + Math.floor(Math.random() * 5),
         '健康宣教': 15 + Math.floor(Math.random() * 5),
-        '康复训练': 14 + Math.floor(Math.random() * 5)
+        '康复训练': 14 + Math.floor(Math.random() * 5),
+        '智慧赋能': 12 + Math.floor(Math.random() * 5)
       },
       feedback: '整体表现一般，建议加强各维度能力',
       strengths: ['态度友善', '有耐心沟通'],
@@ -3400,10 +3437,11 @@ ${chatHistory}
         // 将中文键名转换为英文键名
         const dimensions = score.value.dimensions || {}
         const normalizedDimensions = {
-          sizheng: dimensions['思政维度'] || dimensions.sizheng || 0,
+          lunli: dimensions['伦理操守'] || dimensions.lunli || 0,
           xinli: dimensions['心理慰藉'] || dimensions.xinli || 0,
           jiankang: dimensions['健康宣教'] || dimensions.jiankang || 0,
-          kangfu: dimensions['康复训练'] || dimensions.kangfu || 0
+          kangfu: dimensions['康复训练'] || dimensions.kangfu || 0,
+          zhihui: dimensions['智慧赋能'] || dimensions.zhihui || 0
         }
         
         const { error: insertError } = await supabase.from('practice_records').insert({
@@ -4116,10 +4154,11 @@ function getCaseStats() {
       highestScore: '--',
       lowestScore: '--',
       dimensionStats: {
-        sizheng: { avg: 0, max: 0, min: 0 },
+        lunli: { avg: 0, max: 0, min: 0 },
         xinli: { avg: 0, max: 0, min: 0 },
         jiankang: { avg: 0, max: 0, min: 0 },
-        kangfu: { avg: 0, max: 0, min: 0 }
+        kangfu: { avg: 0, max: 0, min: 0 },
+        zhihui: { avg: 0, max: 0, min: 0 }
       }
     }
   }
@@ -4134,22 +4173,25 @@ function getCaseStats() {
 
   // 计算各维度数据
   const dimensionStats = {
-    sizheng: { values: [], avg: 0, max: 0, min: 0 },
+    lunli: { values: [], avg: 0, max: 0, min: 0 },
     xinli: { values: [], avg: 0, max: 0, min: 0 },
     jiankang: { values: [], avg: 0, max: 0, min: 0 },
-    kangfu: { values: [], avg: 0, max: 0, min: 0 }
+    kangfu: { values: [], avg: 0, max: 0, min: 0 },
+    zhihui: { values: [], avg: 0, max: 0, min: 0 }
   }
 
   caseRecords.forEach(record => {
     if (record.dimensions) {
-      const sz = getDimensionScore(record.dimensions, 'sizheng')
+      const ll = getDimensionScore(record.dimensions, 'lunli')
       const xl = getDimensionScore(record.dimensions, 'xinli')
       const jk = getDimensionScore(record.dimensions, 'jiankang')
       const kf = getDimensionScore(record.dimensions, 'kangfu')
-      if (sz !== null) dimensionStats.sizheng.values.push(sz)
+      const zh = getDimensionScore(record.dimensions, 'zhihui')
+      if (ll !== null) dimensionStats.lunli.values.push(ll)
       if (xl !== null) dimensionStats.xinli.values.push(xl)
       if (jk !== null) dimensionStats.jiankang.values.push(jk)
       if (kf !== null) dimensionStats.kangfu.values.push(kf)
+      if (zh !== null) dimensionStats.zhihui.values.push(zh)
     }
   })
 
@@ -4769,10 +4811,12 @@ function getScoreClass(score) {
 function getDimensionScore(dimensions, key) {
   if (!dimensions) return 0
   const keyMap = {
-    'sizheng': ['sizheng', '思政维度'],
+    'lunli': ['lunli', '伦理操守'],
+    'sizheng': ['sizheng', '思政维度', '伦理操守'],
     'xinli': ['xinli', '心理慰藉'],
     'jiankang': ['jiankang', '健康宣教'],
-    'kangfu': ['kangfu', '康复训练']
+    'kangfu': ['kangfu', '康复训练'],
+    'zhihui': ['zhihui', '智慧赋能']
   }
   const keys = keyMap[key] || [key]
   for (const k of keys) {
