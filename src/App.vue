@@ -11,8 +11,8 @@
       <div class="right-banner"></div>
       <div class="flex items-center justify-center min-h-screen p-4">
         <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-6 relative z-10">
-        <h1 class="text-2xl font-bold text-center text-blue-600 mb-2">阳泉师专医康养AI实训系统</h1>
-        <p class="text-gray-500 text-center mb-6">康养系 · 智能养老护理实训平台</p>
+        <h1 class="text-2xl font-bold text-center text-blue-600 mb-2">医康养AI实训系统</h1>
+        <p class="text-gray-500 text-center mb-6">智能养老护理实训平台</p>
         
         <!-- 登录方式选择 -->
         <div class="flex mb-4 bg-gray-100 rounded-lg p-1">
@@ -137,7 +137,7 @@
           
           <!-- 中间系统名称 - 放大两倍 -->
           <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-center flex-1 mx-4 tracking-wide">
-            阳泉师专医康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.40</span>
+            医康养AI实训系统 <span class="text-xs bg-yellow-500 px-1 rounded ml-2">v3.40</span>
           </h1>
           
           <!-- 右侧退出按钮 -->
@@ -2445,6 +2445,43 @@ function getAllDiseases() {
   return [...caseProfile.diseases, ...caseProfile.customDiseases]
 }
 
+// 地名过滤：屏蔽敏感地名，防止泄密
+const SENSITIVE_WORDS = [
+  { word: '阳泉', replace: '本地' },
+  { word: '平定', replace: '本县' },
+  { word: '娘子关', replace: '周边景区' },
+  { word: '漾泉', replace: '本地' },
+  { word: '煤都', replace: '工业城市' },
+  { word: '山西阳泉', replace: '本地' },
+  { word: '山西省阳泉市', replace: '本地' },
+]
+
+function filterSensitiveWords(text) {
+  if (!text || typeof text !== 'string') return text
+  let result = text
+  for (const item of SENSITIVE_WORDS) {
+    result = result.split(item.word).join(item.replace)
+  }
+  return result
+}
+
+// 递归过滤对象中所有字符串字段
+function filterObject(obj) {
+  if (obj === null || obj === undefined) return obj
+  if (typeof obj === 'string') return filterSensitiveWords(obj)
+  if (Array.isArray(obj)) {
+    return obj.map(item => filterObject(item))
+  }
+  if (typeof obj === 'object') {
+    const filtered = {}
+    for (const key in obj) {
+      filtered[key] = filterObject(obj[key])
+    }
+    return filtered
+  }
+  return obj
+}
+
 // 生成病例
 async function generateCase() {
   const allDiseases = getAllDiseases()
@@ -2514,7 +2551,13 @@ ${currentEmergency ? `- 突发事件：${currentEmergency}` : ''}
   "openingLine": "老人的开场白（要自然，符合老人身份和疾病情况，称呼对方为护理员${currentEmergency ? '，如果是突发事件场景，开场白要体现紧急情况' : ''}）"
 }
 
-重要：studentTitle必须固定为"护理员"，openingLine中必须称呼对方为"护理员"！`
+重要：studentTitle必须固定为"护理员"，openingLine中必须称呼对方为"护理员"！
+
+【地名保密 - 极其重要】
+× 绝对不要提到任何具体的城市、区县、街道名称
+× 禁止出现：阳泉、平定、娘子关、漾泉、煤都 等具体地名
+× 居住的地方用"家里""社区""养老院""县城""市里"等通用表述即可
+× 不要说任何能定位到具体城市的信息（如特产、景区名、方言名等）`
 
     // 使用 Supabase Edge Function 生成病例
     const response = await fetch('https://todnsmeovkpmniqcwucm.supabase.co/functions/v1/chat', {
@@ -2534,7 +2577,7 @@ ${currentEmergency ? `- 突发事件：${currentEmergency}` : ''}
     // 提取JSON
     const jsonMatch = content.match(/\{[\s\S]*\}/)
     if (jsonMatch) {
-      generatedCase.value = JSON.parse(jsonMatch[0])
+      generatedCase.value = filterObject(JSON.parse(jsonMatch[0]))
       currentStep.value = 'case'
       // 如果有突发事件，播放警报
       if (currentEmergency) {
@@ -2581,6 +2624,7 @@ ${currentEmergency ? `- 突发事件：${currentEmergency}` : ''}
       deviceAlert: currentEmergency ? `检测到老人${currentEmergency}，位置：客厅，时间：14:32` : '',
       openingLine: currentEmergency ? `护理员，我好像${currentEmergency}了，快来帮帮我！` : `护理员，我最近总是头晕，你帮我看看吧。`
     }
+    generatedCase.value = filterObject(generatedCase.value)
     currentStep.value = 'case'
     // 如果有突发事件，播放警报
     if (currentEmergency) {
@@ -2910,7 +2954,13 @@ ${dialectTip}
 × 不要说"好的我记住了"
 × 不要说"我不清楚你给我讲讲"
 × 不要用书面语
-× 每次回复必须不一样`
+× 每次回复必须不一样
+
+【地名保密 - 绝对不能说】
+× 绝对不要提到任何具体城市、区县、街道、景区名称
+× 禁止说：阳泉、平定、娘子关、漾泉、煤都 等具体地名
+× 住在哪就说"家里""社区""养老院""县城""市里"，别说具体名字
+× 别说特产、方言名、本地景区名这些能猜到是哪的信息`
 
     const chatMessages = [
       { role: 'system', content: systemPrompt },
@@ -2937,7 +2987,7 @@ ${dialectTip}
       const data = await response.json()
       console.log('响应数据:', data)
       if (data.choices && data.choices[0]) {
-        const reply = data.choices[0].message.content
+        const reply = filterSensitiveWords(data.choices[0].message.content)
         messages.value.push({ role: 'assistant', content: reply })
         speak(reply)
       } else if (data.error) {
@@ -3398,7 +3448,7 @@ ${chatHistory}
     // 提取JSON
     const jsonMatch = content.match(/\{[\s\S]*\}/)
     if (jsonMatch) {
-      score.value = JSON.parse(jsonMatch[0])
+      score.value = filterObject(JSON.parse(jsonMatch[0]))
     } else {
       throw new Error('解析失败')
     }
@@ -3976,11 +4026,14 @@ function viewRecord(record) {
     console.log('  - referenceanswer:', record.referenceanswer)
     console.log('  - messages 数量:', record.messages?.length || 0)
     
-    generatedCase.value = record.case_data
-    messages.value = record.messages || []
+    generatedCase.value = filterObject(record.case_data)
+    messages.value = (record.messages || []).map(m => ({
+      ...m,
+      content: filterSensitiveWords(m.content)
+    }))
     
     // 恢复完整的评分信息
-    score.value = {
+    score.value = filterObject({
       totalScore: record.score || 0,
       dimensions: record.dimensions || {},
       feedback: record.feedback || '',
@@ -3988,7 +4041,7 @@ function viewRecord(record) {
       weaknesses: record.weaknesses || [],
       improvements: record.improvements || [],
       referenceanswer: record.referenceanswer || ''
-    }
+    })
     
     console.log('恢复后的 score.value:', score.value)
     currentStep.value = 'score'
@@ -4569,7 +4622,7 @@ async function generateCaseReport() {
 
   <div class="footer">
     <p>报告生成时间：${new Date().toLocaleString()}</p>
-    <p>阳泉师专康养系AI老人实训系统</p>
+    <p>医康养AI老人实训系统</p>
   </div>
 </body>
 </html>
