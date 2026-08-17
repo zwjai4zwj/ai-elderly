@@ -865,6 +865,16 @@
             </div>
           </div>
           
+          <!-- 2周照护方案参考 -->
+          <div v-if="score.carePlan2Weeks" class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-6 shadow">
+            <div class="flex items-center mb-4">
+              <span class="text-2xl mr-2">📋</span>
+              <h3 class="font-bold text-amber-800">2周短期照护方案参考</h3>
+            </div>
+            <div class="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{{ score.carePlan2Weeks }}</div>
+            <p class="text-xs text-gray-400 mt-3 text-right">* 本方案为AI生成参考，实际照护请结合专业评估</p>
+          </div>
+          
           <!-- 对话记录 -->
           <div v-if="messages && messages.length > 0" class="bg-white rounded-xl p-6 shadow">
             <h3 class="font-bold mb-4">💬 对话记录</h3>
@@ -2009,7 +2019,8 @@ const score = ref({
   feedback: '',
   strengths: [],
   weaknesses: [],
-  improvements: []
+  improvements: [],
+  carePlan2Weeks: ''
 })
 
 // 班级和学生
@@ -2170,7 +2181,7 @@ async function loadData() {
     // 加载练习历史（包含所有字段）
     const { data } = await supabase
       .from('practice_records')
-      .select('*, strengths, weaknesses, improvements, referenceanswer, messages')
+      .select('*, strengths, weaknesses, improvements, referenceanswer, care_plan_2weeks, messages')
       .eq('user_id', currentUser.value.id)
       .order('created_at', { ascending: false })
       .limit(10)
@@ -3536,7 +3547,19 @@ ${chatHistory}
   "strengths": ["具体优点1", "具体优点2"],
   "weaknesses": ["具体不足1", "具体不足2"],
   "improvements": ["具体建议1", "具体建议2"],
-  "referenceanswer": "针对该老人情况的理想沟通参考答案，包含五个维度的合理化建议、智慧化设备（如智能手环、智能床垫、跌倒报警器等）的使用建议，以及预约下次照护时间（如：'明天下午我再来看您'、'后天上午我来进行康复指导'），350字以内"
+  "referenceanswer": "针对该老人情况的理想沟通参考答案，包含五个维度的合理化建议、智慧化设备（如智能手环、智能床垫、跌倒报警器等）的使用建议，以及预约下次照护时间（如：'明天下午我再来看您'、'后天上午我来进行康复指导'），350字以内",
+  "carePlan2Weeks": "为该老人制定一个为期2周的短期照护方案参考，格式如下：
+【第1周 适应期】
+- 每日照护要点：（饮食、用药、活动、心理关怀）
+- 重点关注：（病情监测、风险防控）
+- 智慧设备使用：（智能设备使用安排）
+【第2周 提升期】
+- 每日照护要点：（饮食调整、康复训练、社交活动）
+- 重点关注：（功能改善、安全防护）
+- 智慧设备使用：（监测数据分析）
+【预期效果】
+（2周后可达到的照护目标）
+要求：结合老人具体病情，内容具体可操作，400字以内"
 }`
 
     const response = await fetch(EDGE_FUNCTION_URL, {
@@ -3577,7 +3600,17 @@ ${chatHistory}
       feedback: '整体表现一般，建议加强各维度能力',
       strengths: ['态度友善', '有耐心沟通'],
       weaknesses: ['缺少针对性指导', '心理疏导不足'],
-      improvements: ['加强对老人的情感关怀', '提供更专业的健康指导']
+      improvements: ['加强对老人的情感关怀', '提供更专业的健康指导'],
+      carePlan2Weeks: '【第1周 适应期】
+- 每日照护要点：规律饮食、按时服药、适度散步、每日聊天问候
+- 重点关注：血压血糖监测、跌倒风险防控
+- 智慧设备使用：每日佩戴智能手环监测心率
+【第2周 提升期】
+- 每日照护要点：营养调整、康复训练、参与社交活动
+- 重点关注：功能改善评估、居家安全排查
+- 智慧设备使用：分析两周健康数据趋势
+【预期效果】
+老人生活规律建立，健康指标趋于稳定，心理状态明显改善'
     }
   } finally {
     isTyping.value = false
@@ -3602,7 +3635,8 @@ ${chatHistory}
           zhihui: dimensions['智慧赋能'] || dimensions.zhihui || 0
         }
         
-        const { error: insertError } = await supabase.from('practice_records').insert({
+        // 基础数据
+        const recordData = {
           user_id: currentUser.value.id,
           user_name: currentUser.value.name || '未知学生',
           case_name: selectedCase.value?.name || generatedCase.value.caseName || '练习记录',
@@ -3614,10 +3648,22 @@ ${chatHistory}
           weaknesses: score.value.weaknesses || [],
           improvements: score.value.improvements || [],
           referenceanswer: score.value.referenceanswer || '',
+          care_plan_2weeks: score.value.carePlan2Weeks || '',
           case_data: generatedCase.value,
           messages: messages.value,
           created_at: new Date().toISOString()
-        })
+        }
+        
+        let { error: insertError } = await supabase.from('practice_records').insert(recordData)
+        
+        // 如果 care_plan_2weeks 字段不存在，降级保存（去掉该字段重试）
+        if (insertError && insertError.message && insertError.message.includes('care_plan_2weeks')) {
+          console.warn('care_plan_2weeks 字段不存在，降级保存')
+          const fallbackData = { ...recordData }
+          delete fallbackData.care_plan_2weeks
+          const result = await supabase.from('practice_records').insert(fallbackData)
+          insertError = result.error
+        }
         
         if (insertError) {
           console.error('保存失败:', insertError)
@@ -3632,6 +3678,7 @@ ${chatHistory}
         console.log('保存的 strengths:', score.value.strengths)
         console.log('保存的 improvements:', score.value.improvements)
         console.log('保存的 referenceanswer:', score.value.referenceanswer)
+        console.log('保存的 carePlan2Weeks:', score.value.carePlan2Weeks)
         console.log('保存的 messages 数量:', messages.value?.length || 0)
         // 重新加载数据以更新统计和对比
         await loadData()
@@ -3647,7 +3694,7 @@ function resetPractice() {
   currentStep.value = 'home'
   messages.value = []
   generatedCase.value = {}
-  score.value = { totalScore: 0, dimensions: {}, feedback: '', strengths: [], weaknesses: [], improvements: [] }
+  score.value = { totalScore: 0, dimensions: {}, feedback: '', strengths: [], weaknesses: [], improvements: [], carePlan2Weeks: '' }
   hasSubmitted.value = false  // 重置提交状态
   isScoring.value = false  // 重置评分状态
 }
@@ -4148,7 +4195,8 @@ function viewRecord(record) {
       strengths: record.strengths || [],
       weaknesses: record.weaknesses || [],
       improvements: record.improvements || [],
-      referenceanswer: record.referenceanswer || ''
+      referenceanswer: record.referenceanswer || '',
+      carePlan2Weeks: record.care_plan_2weeks || ''
     })
     
     console.log('恢复后的 score.value:', score.value)
@@ -4903,7 +4951,7 @@ async function loadAllRecords() {
   // 加载所有练习记录
   const { data, error } = await supabase
     .from('practice_records')
-    .select('*, strengths, weaknesses, improvements, referenceanswer, messages')
+    .select('*, strengths, weaknesses, improvements, referenceanswer, care_plan_2weeks, messages')
     .order('created_at', { ascending: false })
   
   if (error) {
