@@ -681,12 +681,23 @@
                 </p>
               </div>
               
-              <!-- 急救规范操作流程 -->
+              <!-- 急救规范操作流程（先隐藏，点击提示才显示） -->
               <div v-if="currentEmergencyProcedure" class="bg-red-50 border border-red-200 rounded-lg p-3 mb-2">
-                <p class="text-sm font-bold text-red-700 mb-2">🚨 {{ currentEmergencyProcedure.title }}</p>
-                <ul class="text-xs text-red-600 space-y-1 pl-1">
-                  <li v-for="(step, idx) in currentEmergencyProcedure.steps" :key="idx">{{ step }}</li>
-                </ul>
+                <p class="text-sm font-bold text-red-700 mb-2">🚨 老人情况危急，请立即采取急救措施！</p>
+                <p class="text-xs text-red-500 mb-2">提示：请回忆{{ caseProfile.customEmergency || caseProfile.emergency }}的标准急救流程</p>
+                <div v-if="!showEmergencyProcedure">
+                  <button @click="confirmShowProcedure" 
+                          class="text-xs px-3 py-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors">
+                    💡 想不起来？获取提示
+                  </button>
+                </div>
+                <div v-else class="mt-2 pt-2 border-t border-red-200">
+                  <p class="text-xs font-bold text-red-700 mb-2">📋 {{ currentEmergencyProcedure.title }}</p>
+                  <ul class="text-xs text-red-600 space-y-1 pl-1">
+                    <li v-for="(step, idx) in currentEmergencyProcedure.steps" :key="idx">{{ step }}</li>
+                  </ul>
+                  <p class="text-xs text-red-400 mt-2 italic">* 提示已开启，本次练习将记录提示使用情况</p>
+                </div>
               </div>
               
               <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-100 rounded-t-lg">
@@ -2032,6 +2043,18 @@ const currentEmergencyProcedure = computed(() => {
 
 // 紧急状态追踪（是否已完成急救）
 const emergencyCompleted = ref(false)
+// 是否显示急救规范流程（点击提示后才显示）
+const showEmergencyProcedure = ref(false)
+// 提示使用次数（用于评分参考）
+const procedureHintCount = ref(0)
+
+function confirmShowProcedure() {
+  if (confirm('确定要查看急救规范流程吗？
+查看提示后，本次练习评分将有所反映。')) {
+    showEmergencyProcedure.value = true
+    procedureHintCount.value++
+  }
+}
 
 const livingTypeOptions = ['独居', '丧偶', '有老伴', '无儿女', '儿女在外地']
 const economicTypeOptions = ['无收入', '有退休金', '有商业保险', '儿女赡养']
@@ -3015,6 +3038,8 @@ function startChat() {
   
   // 重置紧急状态
   emergencyCompleted.value = false
+  showEmergencyProcedure.value = false
+  procedureHintCount.value = 0
   
   if (isEmergency) {
     // 突发疾病场景：不发送开场白，显示提示
@@ -3658,6 +3683,11 @@ ${chatHistory}
 4. 康复训练：是否指导老人进行安全的功能锻炼、日常活动、预防并发症、注意安全事项
 5. 智慧赋能：是否能结合智能设备（智能手环、智能床垫、跌倒报警器、远程监测等）进行健康管理
 
+附加评分说明：
+- 本次练习学生查看急救流程提示 ` + procedureHintCount.value + ` 次
+- 如果是急救场景且学生查看了提示，在评分中适当体现"对急救流程不够熟练"，并在improvements中建议"加强急救操作流程的记忆"
+- 如果是急救场景且学生未查看提示、操作步骤正确，在strengths中体现"急救流程掌握熟练"
+
 评分要求：
 - 严格根据对话内容评分，不要随意给高分
 - 如果某维度完全没有涉及，该维度得0分，并在improvements中建议"建议加强XX维度的沟通"
@@ -3829,6 +3859,8 @@ function resetPractice() {
   score.value = { totalScore: 0, dimensions: {}, feedback: '', strengths: [], weaknesses: [], improvements: [], carePlan2Weeks: '' }
   hasSubmitted.value = false  // 重置提交状态
   isScoring.value = false  // 重置评分状态
+  showEmergencyProcedure.value = false  // 重置急救提示显示
+  procedureHintCount.value = 0  // 重置提示次数
 }
 
 // 创建班级
