@@ -662,6 +662,25 @@
                 <p class="text-xs text-orange-600 mt-2">⚠️ 简单称呼（如"你好"、"拜拜"）只能出现一次，请深入沟通！</p>
               </div>
               
+              <!-- 场景偏离软提示 -->
+              <div v-if="lastSceneTip" class="bg-amber-50 border-l-4 border-amber-400 p-3 mb-2">
+                <p class="text-sm text-amber-700">{{ lastSceneTip }}</p>
+              </div>
+              
+              <!-- 实时照护规范建议 -->
+              <div v-if="careSuggestion" 
+                   :class="careSuggestionType === 'good' ? 'bg-green-50 border-green-400' : careSuggestionType === 'warning' ? 'bg-red-50 border-red-400' : 'bg-blue-50 border-blue-400'"
+                   class="border-l-4 p-3 mb-2">
+                <p class="text-sm font-bold mb-1"
+                   :class="careSuggestionType === 'good' ? 'text-green-700' : careSuggestionType === 'warning' ? 'text-red-700' : 'text-blue-700'">
+                  🎯 照护规范建议
+                </p>
+                <p class="text-xs"
+                   :class="careSuggestionType === 'good' ? 'text-green-700' : careSuggestionType === 'warning' ? 'text-red-700' : 'text-blue-700'">
+                  {{ careSuggestion }}
+                </p>
+              </div>
+              
               <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-100 rounded-t-lg">
               <div v-for="(msg, i) in messages" :key="i" 
                    :class="msg.role === 'user' ? 'text-right' : 'text-left'">
@@ -1893,6 +1912,92 @@ const messages = ref([])
 const userInput = ref('')
 const isGenerating = ref(false)
 const isTyping = ref(false)
+const lastSceneTip = ref('')
+const careSuggestion = ref('')
+const careSuggestionType = ref('')  // tip / warning / good
+
+// 照护规范建议库 - 根据对话内容动态给出专业建议
+function updateCareSuggestion(userMsg) {
+  const msg = userMsg.toLowerCase()
+  
+  // 已覆盖的维度追踪
+  const covered = []
+  for (const m of messages.value) {
+    if (m.role !== 'user') continue
+    const t = m.content
+    if (t.match(/尊重|礼貌|您|请|谢谢|隐私|保密/)) covered.push('伦理操守')
+    if (t.match(/心情|感觉|想|担心|害怕|孤独|寂寞|难过|开心/)) covered.push('心理慰藉')
+    if (t.match(/吃药|药|血压|血糖|饮食|吃饭|睡眠|运动|锻炼|注意|安全/)) covered.push('健康宣教')
+    if (t.match(/活动|走路|康复|锻炼|按摩|起床|翻身/)) covered.push('康复训练')
+    if (t.match(/智能|手环|报警器|远程|监测|床垫/)) covered.push('智慧赋能')
+  }
+  
+  // 找缺失的维度，优先建议
+  const allDims = ['伦理操守', '心理慰藉', '健康宣教', '康复训练', '智慧赋能']
+  const missing = allDims.filter(d => !covered.includes(d))
+  
+  // 根据用户当前消息判断类型
+  let suggestion = ''
+  let type = 'tip'
+  
+  // 问候类 - 建议深入
+  if (msg.match(/^[你您]好[吗呀呢。！!]*$/) || msg.match(/^(嗨|哈喽|hi|hello)\s*$/i)) {
+    suggestion = '👍 开场很好！接下来可以先自我介绍，然后询问老人的身体状况，建立信任关系。'
+    type = 'tip'
+  }
+  // 涉及吃药
+  else if (msg.includes('药')) {
+    suggestion = '💊 很好！询问用药是健康宣教的重要内容。记得还要问清楚：药名、剂量、服药时间、有没有漏服、有没有不良反应。'
+    type = 'good'
+  }
+  // 涉及血压
+  else if (msg.includes('血压')) {
+    suggestion = '🩺 关注血压很专业！可以进一步询问：测量时间、数值范围、有没有吃降压药、有没有头晕头疼的症状。'
+    type = 'good'
+  }
+  // 涉及睡眠
+  else if (msg.match(/睡觉|睡眠|睡得|失眠|睡不着/)) {
+    suggestion = '😴 睡眠评估很重要！可以继续问：每天睡几小时、有没有起夜、入睡难不难、有没有做噩梦。'
+    type = 'good'
+  }
+  // 涉及饮食
+  else if (msg.match(/吃饭|饮食|吃了|吃什么|胃口|饿/)) {
+    suggestion = '🍚 饮食照护是基础！可以深入了解：吃得香不香、能不能自己吃、要不要协助、有没有忌口。'
+    type = 'good'
+  }
+  // 涉及心情/心理
+  else if (msg.match(/心情|想不想|开不开心|难过|孤独|寂寞/)) {
+    suggestion = '💗 心理慰藉很温暖！可以耐心倾听，给予情感支持，适当转移注意力，聊聊感兴趣的事。'
+    type = 'good'
+  }
+  // 涉及锻炼/活动
+  else if (msg.match(/锻炼|运动|活动|走路|散步/)) {
+    suggestion = '🏃 康复训练意识强！注意提醒老人量力而行、循序渐进，活动时注意安全防止跌倒。'
+    type = 'good'
+  }
+  // 涉及智能设备
+  else if (msg.match(/手环|智能|报警器|监测|床垫/)) {
+    suggestion = '🤖 智慧赋能维度！可以介绍设备的作用：跌倒自动报警、心率监测、定位功能等，体现科技助老。'
+    type = 'good'
+  }
+  // 太简单的称呼
+  else if (msg.length <= 3) {
+    suggestion = '💡 对话可以更深入一些，试着问一个具体问题，比如「您今天感觉怎么样？」或者「早饭吃了吗？」'
+    type = 'tip'
+  }
+  // 通用 - 给下一步建议
+  else {
+    if (missing.length > 0) {
+      suggestion = '💡 对话不错！还可以从「' + missing[0] + '」维度继续深入，让沟通更全面。'
+    } else {
+      suggestion = '🌟 五个维度都覆盖到了，沟通很全面！可以做个总结，礼貌结束对话。'
+      type = 'good'
+    }
+  }
+  
+  careSuggestion.value = suggestion
+  careSuggestionType.value = type
+}
 
 // 防止重复提交标记
 const hasSubmitted = ref(false)  // 本次练习是否已提交
@@ -2840,13 +2945,16 @@ async function sendMessage() {
     return
   }
   
-  // 检测是否与案例场景相关
+  // 检测是否与案例场景相关（软提醒，不阻断对话）
   const sceneCheck = checkSceneRelevance(userMsg)
   if (!sceneCheck.relevant) {
-    messages.value.push({ role: 'assistant', content: sceneCheck.warning })
-    userInput.value = ''
-    return
+    lastSceneTip.value = sceneCheck.tip
+  } else {
+    lastSceneTip.value = ''
   }
+  
+  // 根据对话内容生成照护规范建议
+  updateCareSuggestion(userMsg)
   
   messages.value.push({ role: 'user', content: userMsg })
   userInput.value = ''
@@ -5095,7 +5203,7 @@ function checkSceneRelevance(userMsg) {
   if (!hasMatch) {
     return { 
       relevant: false, 
-      warning: '⚠️ 请根据案例场景交流，否则将收到批评。请结合老人的病情、需求和紧急情况进行有效沟通。' 
+      tip: '💡 小提示：可以试着聊聊老人的身体、饮食、睡眠或心情，让对话更贴合照护场景哦～' 
     }
   }
   
