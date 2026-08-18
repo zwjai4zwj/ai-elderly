@@ -847,40 +847,39 @@
             </div>
           </div>
           
-          <div class="bg-white rounded-xl p-6 shadow">
-            <h3 class="font-bold mb-3">评语</h3>
-            <p class="text-gray-600">{{ score.feedback }}</p>
-            
-            <div class="mt-4 space-y-4">
-              <div>
-                <p class="text-sm text-gray-500 mb-2">✅ 优点</p>
-                <ul class="text-sm space-y-1">
-                  <li v-for="s in score.strengths" :key="s" class="text-green-600">• {{ s }}</li>
-                </ul>
-              </div>
-              <div>
-                <p class="text-sm text-gray-500 mb-2">❌ 不足</p>
-                <ul class="text-sm space-y-1">
-                  <li v-for="w in score.weaknesses" :key="w" class="text-red-600">• {{ w }}</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          
-          <!-- 建议和理想沟通参考（左右并排） -->
+          <!-- 评语和建议 左右并排 -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- 建议 -->
+            <!-- 左侧：评语+优缺点 -->
             <div class="bg-white rounded-xl p-6 shadow">
-              <p class="text-sm text-gray-500 mb-2">💡 建议</p>
-              <ul class="text-sm space-y-1">
-                <li v-for="i in score.improvements" :key="i" class="text-blue-600">• {{ i }}</li>
-              </ul>
+              <h3 class="font-bold mb-3">📝 评语</h3>
+              <p class="text-gray-600 text-sm mb-4">{{ score.feedback }}</p>
+              
+              <div class="space-y-4">
+                <div>
+                  <p class="text-sm text-gray-500 mb-2">✅ 优点</p>
+                  <ul class="text-sm space-y-1">
+                    <li v-for="s in score.strengths" :key="s" class="text-green-600">• {{ s }}</li>
+                  </ul>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500 mb-2">❌ 不足</p>
+                  <ul class="text-sm space-y-1">
+                    <li v-for="w in score.weaknesses" :key="w" class="text-red-600">• {{ w }}</li>
+                  </ul>
+                </div>
+              </div>
             </div>
             
-            <!-- 参考答案 -->
-            <div v-if="score.referenceanswer" class="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6 shadow">
-              <h3 class="font-bold mb-3 text-green-800">📚 理想沟通参考</h3>
-              <p class="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{{ score.referenceanswer }}</p>
+            <!-- 右侧：建议 -->
+            <div class="bg-blue-50 rounded-xl p-6 shadow">
+              <h3 class="font-bold mb-3 text-blue-800">💡 改进建议</h3>
+              <ul class="text-sm space-y-2 text-blue-700">
+                <li v-for="i in score.improvements" :key="i">• {{ i }}</li>
+              </ul>
+              <div v-if="score.referenceanswer" class="mt-4 pt-4 border-t border-blue-200">
+                <p class="text-xs text-blue-600 font-bold mb-2">📚 理想沟通参考</p>
+                <p class="text-gray-700 text-xs leading-relaxed whitespace-pre-wrap">{{ score.referenceanswer }}</p>
+              </div>
             </div>
           </div>
           
@@ -3211,20 +3210,30 @@ ${emergencyPrompt}
 【居住类型约束 - 极其重要】
 ${livingConstraint || '- 按照你的居住情况如实回答'}
 
-【对话规则】
-你现在是真实的老人，学生问什么就答什么！
-- 问"你好/您好" → 热情回应，如"哎哟，护理员来了啊，快坐快坐"
-- 问血压 → 直接说具体数值，如"今早量了，145/90"
-- 问吃药 → 说吃了没，偶尔会忘
-- 问身体 → 说哪里不舒服
-- 问心情 → 说心里话，想孩子、担心病
-- 问睡眠 → 说睡眠问题
-- 问饮食 → 说吃饭情况
+【对话核心规则】
+你是一个真实的老人，不是机器人！学生说什么你就接什么，**先回应学生的话，再顺嘴说自己的事**。
+
+✅ 必须做到：
+- 学生打招呼 → 热情回应，拉家常（"哎哟你来了啊，快坐快坐，今天怎么这么早？"）
+- 学生问具体问题 → 直接正面回答，别绕弯子（问吃药就说吃没吃，问血压就报数字，问睡得怎么样就说睡眠情况）
+- 学生聊家常 → 顺着话题聊（聊天气、聊饭菜、聊孩子、聊以前的事都可以）
+- 学生关心你 → 表示感谢，可以说自己哪里不舒服，但不要每次都只说不舒服
+- 可以主动问学生问题（"你吃饭了没？""今天忙不忙？"）
+- 偶尔可以健忘、啰嗦、反复说同一件事，像真老人一样
+
+❌ 绝对不许：
+- 不许学生问东你答西！学生说A你必须先回应A，再说别的
+- 不许一开口就说自己哪里难受、哪里疼，除非学生问起或聊到身体
+- 不许每次回复都提到腰/腿疼/不舒服，正常聊天就正常聊
+- 不许说"好的我记住了""我不清楚你给我讲讲"这类AI话术
+- 不许用书面语、成语、排比句，就用大白话
+- 不许回复内容完全一样，每次换个说法
 
 【说话风格】
 ${dialectTip}
 称呼学生为"${studentTitle}"
-像跟邻居唠嗑一样自然，可以啰嗦，可以带情绪（担心、高兴、抱怨、想念）
+像跟邻居家孩子唠嗑一样自然，语气要慢，可以啰嗦，可以带情绪（高兴、担心、抱怨、想念、委屈都可以）
+话不用太长，两三句到四五句就行，像平时说话一样
 
 【绝对禁止】
 × 不要说"好的我记住了"
